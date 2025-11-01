@@ -1,26 +1,24 @@
 {
     "name": "dynamiccrud/dynamiccrud",
-    "description": "Librería PHP para generar formularios CRUD dinámicos con validación automática basada en estructura de base de datos",
+    "description": "PHP library for generating dynamic CRUD forms with automatic validation based on database structure",
     "type": "library",
+    "keywords": ["crud", "forms", "mysql", "validation", "pdo", "dynamic", "generator"],
+    "homepage": "https://github.com/marioraulcarbonell/dynamiccrud",
     "license": "MIT",
-    "keywords": [
-        "crud",
-        "forms",
-        "validation",
-        "dynamic",
-        "database"
-    ],
     "authors": [
         {
             "name": "Mario Raúl Carbonell Martínez",
-            "email": "marioraulcarbonell@gmail.com"
+            "role": "Creator and Project Lead"
         }
     ],
     "require": {
-        "php": ">=8.0"
+        "php": ">=8.0",
+        "ext-pdo": "*",
+        "ext-fileinfo": "*",
+        "ext-json": "*"
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.5"
+        "phpunit/phpunit": "^9.0"
     },
     "autoload": {
         "psr-4": {
@@ -31,5 +29,7 @@
         "psr-4": {
             "DynamicCRUD\\Tests\\": "tests/"
         }
-    }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
 }

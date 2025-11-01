@@ -1,8 +1,34 @@
+# Dependencies
 /vendor/
 composer.lock
-.phpunit.result.cache
+
+# IDE
 .idea/
 .vscode/
+*.swp
+*.swo
+*~
+
+# Testing
+.phpunit.result.cache
+/coverage/
+
+# Logs
 *.log
 
-examples/uploads/
+# Cache
+cache/*.json
+!cache/.gitkeep
+
+# Uploads
+uploads/*
+!uploads/.gitkeep
+examples/uploads/*
+!examples/uploads/.gitkeep
+
+# Local config
+examples/config_local.php
+
+# OS
+.DS_Store
+Thumbs.db
