@@ -56,13 +56,19 @@ MODIFY COLUMN email VARCHAR(255) COMMENT '{"type": "email", "label": "Tu correo"
 - ✅ Manejo correcto de valores NULL
 - ✅ Metadatos: hidden, display_column
 
-### Fase 3 (Validación Cliente y Archivos) - Planificada
-- [ ] Validación JavaScript en tiempo real
-- [ ] Subida de archivos con validación
-- [ ] Mejoras de accesibilidad
+### Fase 3 (Validación Cliente y Archivos)
+- ✅ Validación JavaScript en tiempo real
+- ✅ Subida de archivos con validación MIME y tamaño
+- ✅ Preview de imágenes
+- ✅ Tooltips informativos
+- ✅ Mejoras de accesibilidad (ARIA, navegación por teclado)
+- ✅ Mensajes mejorados con animaciones
+- ✅ Indicadores de carga
 
-### Fase 4 (Características Avanzadas) - Planificada
-- [ ] Hooks/Eventos (beforeSave, afterCreate)
+### Fase 4 (Características Avanzadas) - En Progreso
+- ✅ Sistema de Hooks/Eventos (10 hooks disponibles)
+- ✅ Transacciones automáticas con rollback
+- ✅ Soporte para campos ENUM
 - [ ] Relaciones muchos-a-muchos
 - [ ] Sistema de auditoría
 - [ ] Soporte PostgreSQL

@@ -45,7 +45,11 @@ class DynamicCRUDValidator {
         this.form.addEventListener('submit', (e) => {
             if (!this.validateForm()) {
                 e.preventDefault();
+                return;
             }
+            
+            // Mostrar spinner y deshabilitar formulario
+            this.showLoading();
         });
     }
 
@@ -140,12 +144,34 @@ class DynamicCRUDValidator {
     }
 
     isValidUrl(url) {
+        // Verificar que comience con http:// o https://
+        if (!/^https?:\/\//i.test(url)) {
+            return false;
+        }
+        
         try {
-            new URL(url);
-            return true;
+            const urlObj = new URL(url);
+            // Verificar que tenga un dominio válido
+            return urlObj.hostname.includes('.');
         } catch {
             return false;
         }
+    }
+    
+    showLoading() {
+        const submitBtn = this.form.querySelector('button[type="submit"]');
+        if (!submitBtn) return;
+        
+        // Deshabilitar botón y formulario
+        submitBtn.disabled = true;
+        this.form.classList.add('form-loading');
+        
+        // Añadir spinner
+        const spinner = document.createElement('span');
+        spinner.className = 'spinner';
+        spinner.setAttribute('role', 'status');
+        spinner.setAttribute('aria-label', 'Cargando...');
+        submitBtn.appendChild(spinner);
     }
 }
 

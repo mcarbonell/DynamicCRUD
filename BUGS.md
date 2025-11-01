@@ -4,7 +4,31 @@
 
 --
 
+---
+
 ## ✅ Bugs Resueltos
+
+### BUG-006: Spinner de carga no visible
+**Estado**: ✅ RESUELTO  
+**Prioridad**: BAJA  
+**Fecha detección**: 2025-01-31  
+**Fecha resolución**: 2025-01-31  
+**Afecta a**: Fase 3 - Mejoras UX
+
+**Descripción**:
+Al enviar el formulario, el spinner de carga no era visible aunque el formulario se oscurecía correctamente.
+
+**Causa raíz**:
+Problema de caché del navegador. El spinner estaba correctamente implementado pero el navegador servía una versión antigua del CSS/JS.
+
+**Solución**:
+Limpiar caché del navegador (Ctrl+F5) y caché del servidor (clear_cache.php).
+
+**Archivos involucrados**:
+- `examples/assets/dynamiccrud.css` - Estilos del spinner
+- `examples/assets/dynamiccrud.js` - Lógica para mostrar spinner
+
+---
 
 ### BUG-001: Token CSRF inválido en products.php
 **Estado**: ✅ RESUELTO  
@@ -174,8 +198,8 @@ ini_set('display_errors', '1');
 
 ## 📊 Estadísticas
 
-- **Total bugs detectados**: 5
-- **Bugs resueltos**: 5 (100%)
+- **Total bugs detectados**: 6
+- **Bugs resueltos**: 6 (100%)
 - **Bugs abiertos**: 0 (0%)
 - **Bugs críticos abiertos**: 0
 

@@ -5,7 +5,7 @@ Todos los cambios notables del proyecto DynamicCRUD serán documentados en este 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 
-## [0.1.0] - 2025 - Fase 1 MVP
+## [0.1.0] - Fase 1 MVP
 
 ### Añadido
 - SchemaAnalyzer para introspección de tablas MySQL
@@ -44,7 +44,7 @@ y este proyecto adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 - URL (FILTER_VALIDATE_URL)
 - Fechas (strtotime)
 
-## [0.2.0] - 2025 - Fase 2
+## [0.2.0] - Fase 2
 
 ### Añadido
 - Detección automática de claves foráneas desde INFORMATION_SCHEMA

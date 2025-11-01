@@ -55,9 +55,19 @@ class FormGenerator
     {
         $label = $column['metadata']['label'] ?? ucfirst($column['name']);
         $value = $this->data[$column['name']] ?? $column['default_value'] ?? '';
+        $tooltip = $column['metadata']['tooltip'] ?? null;
         
         $html = '<div class="form-group">' . "\n";
-        $html .= sprintf('  <label for="%s">%s</label>', $column['name'], htmlspecialchars($label)) . "\n";
+        $html .= sprintf('  <label for="%s">%s', $column['name'], htmlspecialchars($label));
+        
+        if ($tooltip) {
+            $html .= sprintf(
+                ' <span class="tooltip" tabindex="0"><span class="tooltip-icon" aria-label="Ayuda">?</span><span class="tooltip-text" role="tooltip">%s</span></span>',
+                htmlspecialchars($tooltip)
+            );
+        }
+        
+        $html .= '</label>' . "\n";
         $html .= '  ' . $this->renderInput($column, $value) . "\n";
         $html .= '</div>';
         
@@ -68,6 +78,10 @@ class FormGenerator
     {
         if ($this->isForeignKey($column)) {
             return $this->renderForeignKeySelect($column, $value);
+        }
+        
+        if ($this->isEnumField($column)) {
+            return $this->renderEnumSelect($column, $value);
         }
         
         if ($this->isFileField($column)) {
@@ -122,6 +136,7 @@ class FormGenerator
         
         if (!$column['is_nullable']) {
             $attrs[] = 'required';
+            $attrs[] = 'aria-required="true"';
         }
         
         if ($column['max_length']) {
@@ -152,6 +167,37 @@ class FormGenerator
     private function isForeignKey(array $column): bool
     {
         return isset($this->schema['foreign_keys'][$column['name']]);
+    }
+    
+    private function isEnumField(array $column): bool
+    {
+        return $column['sql_type'] === 'enum' && !empty($column['enum_values']);
+    }
+    
+    private function renderEnumSelect(array $column, $value): string
+    {
+        $html = sprintf('<select name="%s" id="%s"%s>',
+            $column['name'],
+            $column['name'],
+            $column['is_nullable'] ? '' : ' required'
+        );
+        
+        if ($column['is_nullable']) {
+            $html .= '<option value="">-- Seleccionar --</option>';
+        }
+        
+        foreach ($column['enum_values'] as $enumValue) {
+            $selected = $value == $enumValue ? ' selected' : '';
+            $html .= sprintf(
+                '<option value="%s"%s>%s</option>',
+                htmlspecialchars($enumValue),
+                $selected,
+                htmlspecialchars(ucfirst($enumValue))
+            );
+        }
+        
+        $html .= '</select>';
+        return $html;
     }
 
     private function renderForeignKeySelect(array $column, $value): string

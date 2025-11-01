@@ -1,0 +1,95 @@
+# Fase 4: Características Avanzadas - Checklist
+
+## 🎯 Objetivo
+Añadir funcionalidades avanzadas que permitan lógica de negocio compleja y relaciones más sofisticadas.
+
+## 📋 Tareas
+
+### 1. Sistema de Hooks/Eventos
+- [x] Definir interfaz de hooks
+- [x] Implementar hooks de validación (beforeValidate, afterValidate)
+- [x] Implementar hooks de guardado (beforeSave, afterSave)
+- [x] Implementar hooks de creación (beforeCreate, afterCreate)
+- [x] Implementar hooks de actualización (beforeUpdate, afterUpdate)
+- [x] Implementar hooks de eliminación (beforeDelete, afterDelete)
+- [x] Permitir múltiples callbacks por hook
+- [x] Documentación y ejemplos
+
+### 2. Transacciones
+- [x] Envolver operaciones en transacciones PDO
+- [x] Rollback automático en caso de error
+- [x] Soporte para hooks dentro de transacciones
+- [x] Tests de integridad
+
+### 3. Relaciones Muchos a Muchos
+- [ ] Detectar relaciones M:N desde metadatos
+- [ ] Renderizar `<select multiple>` para M:N
+- [ ] Método syncPivotTable() en CRUDHandler
+- [ ] Validación de relaciones M:N
+- [ ] Ejemplo funcional con posts y tags
+
+### 4. Auditoría Básica
+- [ ] Sistema de logging de cambios
+- [ ] Registrar usuario, fecha y acción
+- [ ] Tabla de auditoría configurable
+- [ ] Hook afterSave para auditoría
+
+## 🔄 En Progreso
+
+### Relaciones Muchos a Muchos
+- Siguiente funcionalidad a implementar
+- Diseño de metadatos para M:N
+- UI con select multiple
+
+## ✅ Completado
+
+### Sistema de Hooks/Eventos
+- ✅ 10 hooks implementados: beforeValidate, afterValidate, beforeSave, afterSave, beforeCreate, afterCreate, beforeUpdate, afterUpdate, beforeDelete, afterDelete
+- ✅ Soporte para múltiples callbacks por evento
+- ✅ API fluida con métodos encadenables
+- ✅ Ejemplo funcional en hooks_demo.php
+
+### Transacciones
+- ✅ Todas las operaciones envueltas en transacciones PDO
+- ✅ Rollback automático en caso de error
+- ✅ Hooks ejecutados dentro de transacciones
+- ✅ Integridad de datos garantizada
+
+## 📝 Notas de Implementación
+
+### Decisiones Técnicas Fase 4
+1. **Hooks**: Usar closures PHP para máxima flexibilidad
+2. **Transacciones**: Activadas por defecto, desactivables si es necesario
+3. **M:N**: Empezar con UI simple, mejorar en Fase 5
+4. **Auditoría**: Opcional, activable por configuración
+
+### Compatibilidad
+- PHP 8.0+ (uso de closures y tipos)
+- MySQL 5.7+ (transacciones InnoDB)
+
+## 🎯 Criterios de Éxito Fase 4
+- [ ] Hooks funcionan correctamente y permiten modificar datos
+- [ ] Transacciones garantizan integridad de datos
+- [ ] Relaciones M:N funcionan con select multiple
+- [ ] Ejemplos funcionales documentados
+- [ ] Tests cubren casos críticos
+
+## ⏱️ Tiempo Estimado
+- **Estimado**: 2-3 semanas
+- **Real**: [Por completar]
+
+---
+
+**Última actualización**: 2025-01-31
+**Estado**: 🟢 50% COMPLETADA
+
+---
+
+## 🎉 Logros de Fase 4
+
+- ✅ Sistema de hooks completo y funcional
+- ✅ Transacciones garantizan integridad de datos
+- ✅ Soporte ENUM añadido
+- ✅ Documentación completa de hooks
+- ✅ Ejemplo funcional (hooks_demo.php)
+- ✅ API fluida y fácil de usar

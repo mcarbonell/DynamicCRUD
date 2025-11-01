@@ -64,6 +64,7 @@ class SchemaAnalyzer
         $sql = "SELECT 
                     COLUMN_NAME as name,
                     DATA_TYPE as type,
+                    COLUMN_TYPE as full_type,
                     CHARACTER_MAXIMUM_LENGTH as max_length,
                     IS_NULLABLE as nullable,
                     COLUMN_DEFAULT as default_value,
@@ -89,6 +90,12 @@ class SchemaAnalyzer
     {
         $metadata = $this->parseMetadata($row['comment']);
         
+        // Extraer valores ENUM/SET
+        $enumValues = null;
+        if (in_array($row['type'], ['enum', 'set'])) {
+            $enumValues = $this->parseEnumValues($row['full_type']);
+        }
+        
         return [
             'name' => $row['name'],
             'sql_type' => $row['type'],
@@ -96,8 +103,24 @@ class SchemaAnalyzer
             'is_nullable' => $row['nullable'] === 'YES',
             'default_value' => $row['default_value'],
             'is_primary' => $row['key_type'] === 'PRI',
+            'enum_values' => $enumValues,
             'metadata' => $metadata
         ];
+    }
+    
+    private function parseEnumValues(string $fullType): array
+    {
+        // Extraer valores de enum('value1','value2') o set('value1','value2')
+        preg_match("/^(enum|set)\((.+)\)$/i", $fullType, $matches);
+        
+        if (!isset($matches[2])) {
+            return [];
+        }
+        
+        // Parsear los valores entre comillas
+        preg_match_all("/'([^']+)'/", $matches[2], $values);
+        
+        return $values[1] ?? [];
     }
 
     private function parseMetadata(?string $comment): array

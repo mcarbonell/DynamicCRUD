@@ -110,8 +110,13 @@ class ValidationEngine
             $this->errors[$name][] = "El campo {$name} debe ser un email válido";
         }
         
-        if ($type === 'url' && !filter_var($value, FILTER_VALIDATE_URL)) {
-            $this->errors[$name][] = "El campo {$name} debe ser una URL válida";
+        if ($type === 'url') {
+            // Verificar que comience con http:// o https://
+            if (!preg_match('/^https?:\/\//i', $value)) {
+                $this->errors[$name][] = "El campo {$name} debe comenzar con http:// o https://";
+            } elseif (!filter_var($value, FILTER_VALIDATE_URL)) {
+                $this->errors[$name][] = "El campo {$name} debe ser una URL válida";
+            }
         }
         
         // Validar min/max para números
