@@ -32,3 +32,6 @@ examples/config_local.php
 # OS
 .DS_Store
 Thumbs.db
+
+# Local docs
+/local_docs/

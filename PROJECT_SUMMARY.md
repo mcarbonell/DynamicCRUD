@@ -107,12 +107,11 @@ DynamicCRUD/
 | Document | Description |
 |----------|-------------|
 | `README.md` | Introduction and basic usage |
+| `PROJECT_SUMMARY.md` | Project description |
+| `INSTALL.md` | Installation guide |
 | `docs/CUSTOMIZATION.md` | Customization guide |
 | `docs/HOOKS.md` | Hooks system with 8 examples |
 | `docs/MANY_TO_MANY.md` | M:N relationships |
-| `LIMITATIONS.es.md` | Limitations and solutions |
-| `BUGS.es.md` | Bug registry (6 resolved) |
-| `FASE1-4_CHECKLIST.md` | Phase checklists |
 
 ---
 

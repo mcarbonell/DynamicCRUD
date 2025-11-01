@@ -39,7 +39,7 @@
   - Debugging colaborativo
   - Propuestas de soluciones
 - Contribuciones principales:
-  - `LIMITATIONS.md` - Análisis completo de limitaciones
+  - Documento de análisis completo de limitaciones y posibles soluciones.
   - Resolución de BUG-001 (Token CSRF)
   - Propuestas de arquitectura
 - Fecha: 2025-01-31
