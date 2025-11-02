@@ -16,6 +16,7 @@ class CRUDHandler
     private array $hooks = [];
     private array $manyToManyRelations = [];
     private ?AuditLogger $auditLogger = null;
+    private array $virtualFields = [];
 
     public function __construct(PDO $pdo, string $table, ?CacheStrategy $cache = null, ?string $uploadDir = null)
     {
@@ -64,6 +65,15 @@ class CRUDHandler
         
         $data = $this->security->sanitizeInput($_POST, $allowedColumns, $this->schema);
         
+        // Capturar datos de campos virtuales
+        $virtualData = [];
+        foreach ($this->virtualFields as $virtualField) {
+            $fieldName = $virtualField->getName();
+            if (isset($_POST[$fieldName])) {
+                $virtualData[$fieldName] = $_POST[$fieldName];
+            }
+        }
+        
         // Hook: beforeValidate
         $data = $this->executeHook('beforeValidate', $data);
         
@@ -92,6 +102,23 @@ class CRUDHandler
         if (!$validator->validate($data)) {
             $this->pdo->rollBack();
             return ['success' => false, 'errors' => $validator->getErrors()];
+        }
+        
+        // Validar campos virtuales
+        $virtualErrors = [];
+        foreach ($this->virtualFields as $virtualField) {
+            $fieldName = $virtualField->getName();
+            $value = $virtualData[$fieldName] ?? '';
+            $allData = array_merge($data, $virtualData);
+            
+            if (!$virtualField->validate($value, $allData)) {
+                $virtualErrors[$fieldName] = $virtualField->getErrorMessage();
+            }
+        }
+        
+        if (!empty($virtualErrors)) {
+            $this->pdo->rollBack();
+            return ['success' => false, 'errors' => $virtualErrors];
         }
         
         // Hook: afterValidate
@@ -423,5 +450,18 @@ class CRUDHandler
         }
         
         return $this->auditLogger->getHistory($this->table, $recordId);
+    }
+    
+    // Métodos para Campos Virtuales
+    
+    public function addVirtualField(VirtualField $field): self
+    {
+        $this->virtualFields[] = $field;
+        return $this;
+    }
+    
+    public function getVirtualFields(): array
+    {
+        return $this->virtualFields;
     }
 }

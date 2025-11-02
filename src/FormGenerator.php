@@ -39,6 +39,11 @@ class FormGenerator
             $html .= $this->renderField($column) . "\n";
         }
         
+        // Renderizar campos virtuales
+        if ($this->handler) {
+            $html .= $this->renderVirtualFields() . "\n";
+        }
+        
         // Renderizar campos M:N
         if ($this->handler) {
             $html .= $this->renderManyToManyFields() . "\n";
@@ -435,5 +440,83 @@ class FormGenerator
                 return [];
             }
         }
+    }
+    
+    private function renderVirtualFields(): string
+    {
+        $html = '';
+        $virtualFields = $this->handler->getVirtualFields();
+        
+        foreach ($virtualFields as $field) {
+            $html .= $this->renderVirtualField($field) . "\n";
+        }
+        
+        return $html;
+    }
+    
+    private function renderVirtualField(VirtualField $field): string
+    {
+        $name = $field->getName();
+        $type = $field->getType();
+        $label = $field->getLabel();
+        $required = $field->isRequired();
+        $attributes = $field->getAttributes();
+        
+        $html = '<div class="form-group">' . "\n";
+        $html .= sprintf('  <label for="%s">%s', $name, htmlspecialchars($label));
+        
+        if (isset($attributes['tooltip'])) {
+            $html .= sprintf(
+                ' <span class="tooltip" tabindex="0"><span class="tooltip-icon" aria-label="Ayuda">?</span><span class="tooltip-text" role="tooltip">%s</span></span>',
+                htmlspecialchars($attributes['tooltip'])
+            );
+        }
+        
+        $html .= '</label>' . "\n";
+        
+        $attrs = [];
+        if ($required) {
+            $attrs[] = 'required';
+            $attrs[] = 'aria-required="true"';
+        }
+        
+        if (isset($attributes['placeholder'])) {
+            $attrs[] = sprintf('placeholder="%s"', htmlspecialchars($attributes['placeholder']));
+        }
+        
+        if (isset($attributes['pattern'])) {
+            $attrs[] = sprintf('pattern="%s"', htmlspecialchars($attributes['pattern']));
+        }
+        
+        if (isset($attributes['minlength'])) {
+            $attrs[] = sprintf('minlength="%d"', $attributes['minlength']);
+        }
+        
+        if (isset($attributes['maxlength'])) {
+            $attrs[] = sprintf('maxlength="%d"', $attributes['maxlength']);
+        }
+        
+        $attrString = $attrs ? ' ' . implode(' ', $attrs) : '';
+        
+        if ($type === 'checkbox') {
+            $html .= sprintf(
+                '  <input type="checkbox" name="%s" id="%s" value="1"%s>',
+                $name,
+                $name,
+                $attrString
+            ) . "\n";
+        } else {
+            $html .= sprintf(
+                '  <input type="%s" name="%s" id="%s"%s>',
+                $type,
+                $name,
+                $name,
+                $attrString
+            ) . "\n";
+        }
+        
+        $html .= '</div>';
+        
+        return $html;
     }
 }

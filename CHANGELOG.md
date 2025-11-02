@@ -175,13 +175,89 @@ Segunda versión con sistema completo de testing automatizado y CI/CD pipeline.
 
 ---
 
+## [1.3.0] - 2025-01-31
+
+### 🎉 Fase 6: PostgreSQL Support
+
+Cuarta versión con soporte multi-base de datos.
+
+### ✨ Añadido
+
+#### PostgreSQL Support
+- **DatabaseAdapter interface** - Abstracción para múltiples bases de datos
+- **MySQLAdapter** - Implementación para MySQL
+- **PostgreSQLAdapter** - Implementación para PostgreSQL
+- **Auto-detección** - Detecta automáticamente el driver PDO
+- **Schema analysis** - Soporte para INFORMATION_SCHEMA de PostgreSQL
+- **Foreign keys** - Detección en ambas bases de datos
+- **Type normalization** - Mapeo de tipos PostgreSQL a tipos comunes
+- **Identifier quoting** - Backticks (MySQL) vs Double quotes (PostgreSQL)
+- **Docker setup** - docker-compose.yml con MySQL y PostgreSQL
+- **Setup script** - examples/setup_postgres.sql
+- **Demo funcional** - examples/postgres_demo.php
+- **Documentación** - DOCKER_SETUP.md
+
+#### API Changes
+- `SchemaAnalyzer::__construct()` - Nuevo parámetro opcional `$adapter`
+- Auto-detección de driver: `mysql` → MySQLAdapter, `pgsql` → PostgreSQLAdapter
+
+### 🔄 Cambiado
+
+- **SchemaAnalyzer** refactorizado para usar DatabaseAdapter
+- Lógica de schema movida a adapters específicos
+- Cache keys simplificados (sin nombre de base de datos)
+
+### 📊 Estadísticas
+
+- **Bases de datos soportadas**: 2 (MySQL, PostgreSQL)
+- **Clases nuevas**: 3 (DatabaseAdapter, MySQLAdapter, PostgreSQLAdapter)
+- **Ejemplos nuevos**: 1 (postgres_demo.php)
+- **Scripts SQL**: 1 (setup_postgres.sql)
+
+---
+
+## [1.2.0] - 2025-01-31
+
+### 🎉 Fase 6: Virtual Fields (Parcial)
+
+Tercera versión con soporte para campos virtuales.
+
+### ✨ Añadido
+
+#### Virtual Fields System
+- **VirtualField class** - Define campos que no se guardan en BD
+- **password_confirmation** - Validación de confirmación de contraseña
+- **terms_acceptance** - Checkbox de aceptación de términos
+- **Custom validators** - Funciones de validación personalizadas
+- **Atributos extendidos** - placeholder, tooltip, minlength, maxlength, pattern
+- **Mensajes de error personalizados** - error_message configurable
+- **Integración con hooks** - beforeSave para procesar datos virtuales
+- **Tests completos** - VirtualFieldTest con 10 tests
+- **Documentación completa** - docs/VIRTUAL_FIELDS.md
+- **Ejemplo funcional** - examples/virtual_fields_demo.php
+
+#### API Methods
+- `DynamicCRUD::addVirtualField(VirtualField $field)` - Añadir campo virtual
+- `VirtualField::validate($value, $allData)` - Validar campo
+- `VirtualField::getErrorMessage()` - Obtener mensaje de error
+
+### 📊 Estadísticas
+
+- **Tests totales**: 123 (113 anteriores + 10 nuevos)
+- **Clases nuevas**: 1 (VirtualField)
+- **Ejemplos nuevos**: 1 (virtual_fields_demo.php)
+- **Documentos nuevos**: 1 (VIRTUAL_FIELDS.md)
+
+---
+
 ## [Unreleased] - Futuro
 
 ### 🔮 Planificado
 
 #### Alta Prioridad
-- [ ] Soporte PostgreSQL (patrón Adapter)
-- [ ] Campos virtuales (confirmación password)
+- [x] Soporte PostgreSQL (patrón Adapter) - v1.3.0
+- [x] Campos virtuales (confirmación password) - v1.2.0
+- [ ] Tests para PostgreSQL
 - [ ] Resolver 5 tests skipped
 
 #### Media Prioridad

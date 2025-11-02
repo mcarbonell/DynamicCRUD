@@ -3,6 +3,7 @@ vendor/
 
 # Cache
 cache/*.json
+cache/*.cache
 !cache/.gitkeep
 
 # Uploads

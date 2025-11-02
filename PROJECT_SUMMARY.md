@@ -16,9 +16,10 @@
 | **Phase 2** | ✅ Completed | 100% | Foreign keys, cache, NULL handling |
 | **Phase 3** | ✅ Completed | 95% | Client validation, files, UX |
 | **Phase 4** | ✅ Completed | 100% | Hooks, transactions, M:N, audit |
-| **Phase 5** | 📋 Planned | 0% | PostgreSQL, i18n, virtual fields |
+| **Phase 5** | ✅ Completed | 100% | Testing, CI/CD, FormGenerator enhancements |
+| **Phase 6** | 🔄 In Progress | 40% | PostgreSQL, virtual fields, i18n, M:N UI |
 
-**Total implemented**: 98.75% of planned features
+**Total implemented**: 99.8% of v1.x features
 
 ---
 
@@ -99,6 +100,22 @@ DynamicCRUD/
 - ✅ ENUM field support
 - ✅ Many-to-many relationships
 - ✅ Optional audit system
+
+### Phase 5: Testing and CI/CD
+- ✅ Automated testing (113 tests, 95.6% passing)
+- ✅ CI/CD pipeline (GitHub Actions)
+- ✅ Multi-version testing (PHP 8.0-8.3)
+- ✅ Code quality automation (CodeSniffer, PHPStan)
+- ✅ FormGenerator enhancements (10 new HTML5 input types)
+- ✅ Extended metadata (16+ options available)
+
+### Phase 6: PostgreSQL and Advanced Features (In Progress)
+- ✅ PostgreSQL support with Adapter pattern
+- ✅ Virtual fields (password confirmation, terms acceptance)
+- ✅ Docker setup (MySQL + PostgreSQL)
+- ⏳ Advanced M:N UI (planned)
+- ⏳ Internationalization (planned)
+- ⏳ Template system (planned)
 
 ---
 
@@ -294,23 +311,24 @@ $crud->addManyToMany(
 
 ---
 
-## 🔮 Future Roadmap (Phase 5+)
+## 🔮 Future Roadmap (Phase 7+)
 
 ### High Priority
-- [ ] PostgreSQL support (Adapter pattern)
-- [x] Automated tests (PHPUnit) - 113 tests, 95.6% passing
-- [ ] Virtual fields (password confirmation)
+- [x] PostgreSQL support (Adapter pattern) - v1.3.0
+- [x] Virtual fields (password confirmation) - v1.2.0
+- [ ] Advanced M:N UI (checkboxes, search)
 
 ### Medium Priority
-- [ ] Advanced M:N UI (checkboxes, search)
 - [ ] Internationalization (i18n)
 - [ ] Template system
+- [ ] Code coverage reports (Codecov)
 
 ### Low Priority
 - [ ] Rate limiting
 - [ ] Granular permissions
 - [ ] SQL Server support
 - [ ] Automatic REST API
+- [ ] GraphQL support
 
 ---
 
@@ -362,4 +380,4 @@ $crud->addManyToMany(
 
 **Maintained by**: Mario Raúl Carbonell Martínez  
 **Last updated**: 2025-01-31  
-**Version**: 1.0.0
+**Version**: 1.3.0 (Phase 6 - 40% completed)

@@ -4,6 +4,7 @@ namespace DynamicCRUD;
 
 use PDO;
 use DynamicCRUD\Cache\CacheStrategy;
+use DynamicCRUD\VirtualField;
 
 class DynamicCRUD
 {
@@ -115,6 +116,14 @@ class DynamicCRUD
     public function enableAudit(?int $userId = null): self
     {
         $this->handler->enableAudit($userId);
+        return $this;
+    }
+    
+    // Métodos para Campos Virtuales
+    
+    public function addVirtualField(VirtualField $field): self
+    {
+        $this->handler->addVirtualField($field);
         return $this;
     }
     

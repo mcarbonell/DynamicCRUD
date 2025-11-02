@@ -4,25 +4,44 @@ namespace DynamicCRUD;
 
 use PDO;
 use DynamicCRUD\Cache\CacheStrategy;
+use DynamicCRUD\Database\DatabaseAdapter;
+use DynamicCRUD\Database\MySQLAdapter;
+use DynamicCRUD\Database\PostgreSQLAdapter;
 
 class SchemaAnalyzer
 {
     private PDO $pdo;
-    private string $database;
+    private DatabaseAdapter $adapter;
     private ?CacheStrategy $cache;
     private int $cacheTtl;
 
-    public function __construct(PDO $pdo, ?CacheStrategy $cache = null, int $cacheTtl = 3600)
+    public function __construct(PDO $pdo, ?CacheStrategy $cache = null, int $cacheTtl = 3600, ?DatabaseAdapter $adapter = null)
     {
         $this->pdo = $pdo;
-        $this->database = $pdo->query('SELECT DATABASE()')->fetchColumn();
         $this->cache = $cache;
         $this->cacheTtl = $cacheTtl;
+        
+        if ($adapter === null) {
+            $this->adapter = $this->detectAdapter($pdo);
+        } else {
+            $this->adapter = $adapter;
+        }
+    }
+    
+    private function detectAdapter(PDO $pdo): DatabaseAdapter
+    {
+        $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+        
+        return match($driver) {
+            'mysql' => new MySQLAdapter($pdo),
+            'pgsql' => new PostgreSQLAdapter($pdo),
+            default => throw new \Exception("Unsupported database driver: {$driver}")
+        };
     }
 
     public function getTableSchema(string $table): array
     {
-        $cacheKey = "schema_{$this->database}_{$table}";
+        $cacheKey = "schema_{$table}";
         
         if ($this->cache) {
             $cached = $this->cache->get($cacheKey);
@@ -31,16 +50,7 @@ class SchemaAnalyzer
             }
         }
         
-        $columns = $this->getColumns($table);
-        $primaryKey = $this->getPrimaryKey($table);
-        $foreignKeys = $this->getForeignKeys($table);
-        
-        $schema = [
-            'table' => $table,
-            'columns' => $columns,
-            'primary_key' => $primaryKey,
-            'foreign_keys' => $foreignKeys
-        ];
+        $schema = $this->adapter->getTableSchema($table);
         
         if ($this->cache) {
             $this->cache->set($cacheKey, $schema, $this->cacheTtl);
@@ -55,121 +65,7 @@ class SchemaAnalyzer
             return false;
         }
         
-        $cacheKey = "schema_{$this->database}_{$table}";
+        $cacheKey = "schema_{$table}";
         return $this->cache->invalidate($cacheKey);
-    }
-
-    private function getColumns(string $table): array
-    {
-        $sql = "SELECT 
-                    COLUMN_NAME as name,
-                    DATA_TYPE as type,
-                    COLUMN_TYPE as full_type,
-                    CHARACTER_MAXIMUM_LENGTH as max_length,
-                    IS_NULLABLE as nullable,
-                    COLUMN_DEFAULT as default_value,
-                    COLUMN_KEY as key_type,
-                    COLUMN_COMMENT as comment
-                FROM INFORMATION_SCHEMA.COLUMNS
-                WHERE TABLE_SCHEMA = :database 
-                AND TABLE_NAME = :table
-                ORDER BY ORDINAL_POSITION";
-
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['database' => $this->database, 'table' => $table]);
-        
-        $columns = [];
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $columns[] = $this->normalizeColumn($row);
-        }
-        
-        return $columns;
-    }
-
-    private function normalizeColumn(array $row): array
-    {
-        $metadata = $this->parseMetadata($row['comment']);
-        
-        // Extraer valores ENUM/SET
-        $enumValues = null;
-        if (in_array($row['type'], ['enum', 'set'])) {
-            $enumValues = $this->parseEnumValues($row['full_type']);
-        }
-        
-        return [
-            'name' => $row['name'],
-            'sql_type' => $row['type'],
-            'max_length' => $row['max_length'],
-            'is_nullable' => $row['nullable'] === 'YES',
-            'default_value' => $row['default_value'],
-            'is_primary' => $row['key_type'] === 'PRI',
-            'enum_values' => $enumValues,
-            'metadata' => $metadata
-        ];
-    }
-    
-    private function parseEnumValues(string $fullType): array
-    {
-        // Extraer valores de enum('value1','value2') o set('value1','value2')
-        preg_match("/^(enum|set)\((.+)\)$/i", $fullType, $matches);
-        
-        if (!isset($matches[2])) {
-            return [];
-        }
-        
-        // Parsear los valores entre comillas
-        preg_match_all("/'([^']+)'/", $matches[2], $values);
-        
-        return $values[1] ?? [];
-    }
-
-    private function parseMetadata(?string $comment): array
-    {
-        if (empty($comment)) {
-            return [];
-        }
-
-        $decoded = json_decode($comment, true);
-        return is_array($decoded) ? $decoded : [];
-    }
-
-    private function getPrimaryKey(string $table): ?string
-    {
-        $sql = "SELECT COLUMN_NAME
-                FROM INFORMATION_SCHEMA.COLUMNS
-                WHERE TABLE_SCHEMA = :database 
-                AND TABLE_NAME = :table
-                AND COLUMN_KEY = 'PRI'
-                LIMIT 1";
-
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['database' => $this->database, 'table' => $table]);
-        
-        return $stmt->fetchColumn() ?: null;
-    }
-
-    private function getForeignKeys(string $table): array
-    {
-        $sql = "SELECT 
-                    kcu.COLUMN_NAME as column_name,
-                    kcu.REFERENCED_TABLE_NAME as referenced_table,
-                    kcu.REFERENCED_COLUMN_NAME as referenced_column
-                FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE kcu
-                WHERE kcu.TABLE_SCHEMA = :database
-                AND kcu.TABLE_NAME = :table
-                AND kcu.REFERENCED_TABLE_NAME IS NOT NULL";
-
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['database' => $this->database, 'table' => $table]);
-        
-        $foreignKeys = [];
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $foreignKeys[$row['column_name']] = [
-                'table' => $row['referenced_table'],
-                'column' => $row['referenced_column']
-            ];
-        }
-        
-        return $foreignKeys;
     }
 }

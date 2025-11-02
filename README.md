@@ -31,7 +31,9 @@ Stop writing repetitive CRUD code. DynamicCRUD analyzes your MySQL schema and cr
 - **Custom display columns** for related data
 
 ### ⚡ Advanced
+- **Multi-database support** (MySQL, PostgreSQL)
 - **Hooks/Events system** (10 lifecycle hooks)
+- **Virtual fields** (password confirmation, terms acceptance)
 - **Automatic transactions** with rollback on error
 - **Audit logging** for change tracking
 - **Caching system** for schema metadata
@@ -46,7 +48,7 @@ Stop writing repetitive CRUD code. DynamicCRUD analyzes your MySQL schema and cr
 composer require dynamiccrud/dynamiccrud
 ```
 
-**Requirements:** PHP 8.0+, MySQL 5.7+, PDO extension
+**Requirements:** PHP 8.0+, MySQL 5.7+ or PostgreSQL 12+, PDO extension
 
 ---
 
@@ -60,7 +62,11 @@ require 'vendor/autoload.php';
 
 use DynamicCRUD\DynamicCRUD;
 
+// MySQL
 $pdo = new PDO('mysql:host=localhost;dbname=mydb', 'user', 'pass');
+// PostgreSQL
+// $pdo = new PDO('pgsql:host=localhost;dbname=mydb', 'user', 'pass');
+
 $crud = new DynamicCRUD($pdo, 'users');
 
 // That's it! Handle both display and submission
@@ -137,7 +143,34 @@ $crud->addHook('afterCreate', function($data, $id) {
 $crud->handleSubmission();
 ```
 
-### 6. Audit Logging
+### 6. Virtual Fields
+
+```php
+use DynamicCRUD\VirtualField;
+
+$crud = new DynamicCRUD($pdo, 'users');
+
+// Add password confirmation field (not stored in database)
+$crud->addVirtualField(new VirtualField(
+    name: 'password_confirmation',
+    type: 'password',
+    label: 'Confirm Password',
+    required: true,
+    validator: fn($value, $data) => $value === ($data['password'] ?? ''),
+    attributes: [
+        'placeholder' => 'Repeat your password',
+        'error_message' => 'Passwords do not match'
+    ]
+));
+
+// Hash password before saving
+$crud->beforeSave(function($data) {
+    $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
+    return $data;
+});
+```
+
+### 7. Audit Logging
 
 ```php
 $crud = new DynamicCRUD($pdo, 'users');
@@ -152,8 +185,10 @@ $crud->handleSubmission();
 ## 📚 Documentation
 
 - [Hooks System Guide](docs/HOOKS.md) - 10 lifecycle hooks explained
+- [Virtual Fields Guide](docs/VIRTUAL_FIELDS.md) - Password confirmation, terms acceptance
 - [Many-to-Many Relationships](docs/MANY_TO_MANY.md) - M:N setup guide
 - [Customization Guide](docs/CUSTOMIZATION.md) - Metadata options
+- [Docker Setup](DOCKER_SETUP.md) - MySQL & PostgreSQL with Docker
 - [Changelog](CHANGELOG.md) - Version history
 - [Contributing](CONTRIBUTING.md) - How to contribute
 
@@ -247,11 +282,21 @@ vendor/bin/phpunit --testdox
 - Caching system
 - Comprehensive test suite
 
+### ✅ Completed (v1.3.0)
+- PostgreSQL support with Adapter pattern
+- Auto-detection of database driver
+- Docker setup for MySQL & PostgreSQL
+
+### ✅ Completed (v1.2.0)
+- Virtual fields (password confirmation, terms acceptance)
+- Comprehensive test suite (113 tests)
+- CI/CD pipeline (GitHub Actions)
+- FormGenerator enhancements (16+ metadata options)
+
 ### 🔮 Planned (v2.0+)
-- [ ] PostgreSQL support
 - [ ] Advanced M:N UI (checkboxes, search)
-- [ ] Virtual fields (password confirmation)
 - [ ] Internationalization (i18n)
+- [ ] SQL Server support
 - [ ] REST API generation
 - [ ] GraphQL support
 
@@ -259,12 +304,14 @@ vendor/bin/phpunit --testdox
 
 ## 📊 Project Stats
 
-- **10 PHP classes** (~3,500 lines)
-- **8 working examples**
-- **7 technical documents**
-- **113 automated tests** (95.6% passing)
-- **Development time**: < 1 day
-- **Test coverage**: 95.6%
+- **13 PHP classes** (~4,200 lines)
+- **9 working examples**
+- **8 technical documents**
+- **147 automated tests** (95.2% passing)
+- **Databases supported**: 2 (MySQL, PostgreSQL)
+- **Development time**: < 2 days
+- **Test coverage**: 95.2%
+- **Databases tested**: MySQL, PostgreSQL
 
 ---
 
