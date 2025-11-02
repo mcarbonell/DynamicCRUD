@@ -1,130 +1,71 @@
 # DynamicCRUD - Product Overview
 
 ## Purpose
-DynamicCRUD is a PHP library that automatically generates complete CRUD (Create, Read, Update, Delete) forms with validation, security, and advanced features by analyzing MySQL database structure. It eliminates repetitive CRUD code by treating the database schema as the single source of truth.
+DynamicCRUD is a PHP library that automatically generates fully functional CRUD (Create, Read, Update, Delete) forms with validation based on database schema structure. It eliminates repetitive CRUD code by analyzing MySQL/PostgreSQL schemas and creating secure, validated forms out of the box.
 
-## Core Value Proposition
-- **Zero-configuration form generation**: Automatically creates forms from database tables without manual HTML or validation code
-- **Database-first approach**: Schema defines everything - column types, constraints, relationships, and validation rules
-- **Production-ready security**: Built-in CSRF protection, SQL injection prevention, XSS protection, and secure file uploads
-- **Extensible architecture**: 10 lifecycle hooks allow custom logic without modifying core code
+## Value Proposition
+- **Zero-config form generation**: Analyze database schema and generate forms automatically
+- **Time savings**: Reduce CRUD development from hours to minutes (3 lines of code for basic CRUD)
+- **Built-in security**: CSRF protection, SQL injection prevention, XSS protection, file upload security
+- **Production-ready**: Comprehensive validation (client + server), transaction safety, audit logging
 
 ## Key Features
 
-### Automatic Form Generation
-- Analyzes MySQL schema and generates complete HTML forms
-- Maps SQL types to appropriate input types (VARCHAR→text, INT→number, etc.)
-- Respects NOT NULL constraints as required fields
-- Supports ENUM fields with auto-generated select dropdowns
-- Handles nullable fields with proper NULL vs empty string distinction
-
-### Validation System
-- **Server-side validation**: Type checking, length limits, required fields, format validation
-- **Client-side validation**: Real-time JavaScript validation with instant feedback
-- **Custom validation**: JSON metadata in column comments for min/max, patterns, tooltips
-- **Cross-field validation**: Via afterValidate hook for complex business rules
+### Core Capabilities
+- Automatic form generation from SQL schema with zero configuration
+- Server-side and client-side JavaScript validation
+- CSRF token protection built-in
+- SQL injection prevention via prepared statements
+- Smart NULL handling for nullable database fields
+- File upload support with real MIME type validation (finfo)
+- ENUM field support with auto-generated select dropdowns
 
 ### Relationship Management
-- **Foreign keys (1:N)**: Automatic detection and dropdown generation with related table data
-- **Many-to-many (M:N)**: Multi-select interface with automatic pivot table synchronization
-- **Custom display columns**: Configure which field to show in relationship dropdowns
+- Foreign key auto-detection with dropdown selects
+- Many-to-many relationships with multi-select UI
+- Custom display columns for related data (e.g., show "full_name" instead of "id")
+- Advanced M:N UI with checkboxes and search functionality
 
-### Security Features
-- CSRF protection with automatic token generation and validation
-- SQL injection prevention using PDO prepared statements exclusively
-- XSS protection through automatic input sanitization
-- File upload security with real MIME type validation (not just extensions)
-- Automatic transactions with rollback on errors
+### Advanced Features
+- **Multi-database support**: MySQL 5.7+ and PostgreSQL 12+ via adapter pattern
+- **Internationalization (i18n)**: 3 languages included (English, Spanish, French) with auto-detection
+- **Template System**: Blade-like syntax for custom layouts with inheritance and partials
+- **Hooks/Events**: 10 lifecycle hooks (beforeValidate, afterValidate, beforeSave, afterSave, etc.)
+- **Virtual fields**: Non-database fields like password confirmation, terms acceptance
+- **Automatic transactions**: Rollback on error for data integrity
+- **Audit logging**: Track who changed what, when, and from where (IP tracking)
+- **Caching system**: Schema metadata caching for performance
+- **Accessibility**: ARIA labels, keyboard navigation support
 
-### File Upload Support
-- MIME type validation using PHP's finfo extension
-- File size limits configurable per field
-- Unique filename generation to prevent conflicts
-- Image preview functionality
-- Configurable accepted file types
-
-### Hooks/Events System
-10 lifecycle hooks for custom logic:
-- **beforeValidate/afterValidate**: Modify or validate data
-- **beforeSave/afterSave**: Common logic for create and update
-- **beforeCreate/afterCreate**: Creation-specific logic (welcome emails, defaults)
-- **beforeUpdate/afterUpdate**: Update-specific logic (change tracking, cache clearing)
-- **beforeDelete/afterDelete**: Deletion logic (dependency checks, file cleanup)
-
-### Audit Logging
-- Optional change tracking system
-- Records: action type, user ID, IP address, timestamp
-- Stores old and new values as JSON
-- Useful for compliance and debugging
-
-### Performance Optimization
-- Schema caching system to avoid repeated database queries
-- Lazy loading of relationship data
-- Prepared statement reuse
-- Configurable cache strategies (file-based included)
+### Customization
+- JSON metadata in column comments for field configuration (16+ options)
+- Custom validators and transformers via hooks
+- Template engine for complete UI control
+- Extensible via adapter pattern for new databases
 
 ## Target Users
 
 ### Primary Users
-- **PHP developers** building admin panels and backoffice applications
+- **PHP developers** building admin panels, backoffice systems, or data management interfaces
 - **Full-stack developers** needing rapid CRUD prototyping
-- **Small to medium teams** wanting to reduce boilerplate code
-- **Agencies** building multiple client applications with standard CRUD needs
+- **Startups/SMBs** requiring quick database-driven applications
 
-### Ideal Use Cases
-- Admin panels for content management
-- Application backoffice interfaces
-- Rapid prototypes and MVPs
-- Internal tools and dashboards
-- Applications requiring audit trails
-- Forms with complex validation rules
+### Use Cases
+1. **Admin Panels**: Manage users, products, categories, orders
+2. **Content Management**: Blog posts, pages, media libraries
+3. **Data Entry Systems**: Forms for data collection and management
+4. **Prototyping**: Rapid MVP development with database-driven UIs
+5. **Internal Tools**: Employee management, inventory systems, CRM backends
 
-### Not Recommended For
-- Highly customized UI requirements
-- Multi-step wizards or complex workflows
-- Applications without database backing
-- Forms with extensive conditional logic across many fields
-- Public-facing forms requiring specific branding
+### Skill Level
+- **Beginner-friendly**: Works with 3 lines of code for basic CRUD
+- **Advanced-ready**: Hooks, virtual fields, templates for complex requirements
+- **Requirements**: PHP 8.0+, basic PDO knowledge, MySQL/PostgreSQL database
 
-## Technical Requirements
-- PHP 8.0 or higher
-- MySQL 5.7 or higher
-- PDO extension
-- Fileinfo extension (for file uploads)
-- JSON extension
-
-## Customization Options
-
-### JSON Metadata in Column Comments
-Configure field behavior without code changes:
-- `type`: Input type (email, url, number, file, etc.)
-- `label`: Custom field label
-- `tooltip`: Help text displayed to users
-- `min/max`: Numeric range validation
-- `minlength`: Minimum text length
-- `hidden`: Hide field from forms
-- `display_column`: Which column to show for foreign keys
-- `accept`: File type restrictions
-- `allowed_mimes`: Specific MIME types
-- `max_size`: Maximum file size in bytes
-
-### Example Metadata
-```json
-{
-  "type": "email",
-  "label": "Email Address",
-  "tooltip": "We will never share your email",
-  "minlength": 5
-}
-```
-
-## Project Statistics
-- **10 PHP classes** (~3,500 lines of code)
-- **8 working examples** demonstrating all features
-- **7 technical documents** (English and Spanish)
-- **98.75% feature completion** of planned v1.0 scope
-- **100% bug resolution rate** (6/6 resolved)
-- **Development time**: Less than 1 day with AI assistance
-
-## Licensing
-MIT License - Free for commercial and personal use
+## Competitive Advantages
+- **Minimal code**: 3 lines for full CRUD vs. hundreds of lines manually
+- **Security-first**: CSRF, SQL injection, XSS protection by default
+- **Database-agnostic**: MySQL and PostgreSQL support with adapter pattern
+- **Comprehensive testing**: 195 automated tests with 76% pass rate
+- **Production-ready**: Audit logging, transactions, caching, i18n
+- **Modern PHP**: Requires PHP 8.0+, uses modern language features

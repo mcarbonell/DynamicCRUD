@@ -326,7 +326,7 @@ class FormGenerator
 
     private function renderAssets(): string
     {
-        $html = '<link rel="stylesheet" href="assets/dynamiccrud.css">';
+        $html = '';
         
         // Add translations for JavaScript
         if ($this->handler && $this->handler->getTranslator()) {
@@ -342,14 +342,6 @@ class FormGenerator
                 'maxlength' => $t->t('validation.maxlength', ['field' => '', 'maxlength' => '']),
             ];
             $html .= '<script>window.DynamicCRUDTranslations = ' . json_encode($translations) . ';</script>';
-        }
-        
-        $html .= '<script src="assets/dynamiccrud.js" defer></script>';
-        
-        // Add M:N assets if needed
-        if ($this->handler && !empty($this->handler->getManyToManyRelations())) {
-            $html .= '<link rel="stylesheet" href="assets/manytomany.css">';
-            $html .= '<script src="assets/manytomany.js" defer></script>';
         }
         
         return $html;

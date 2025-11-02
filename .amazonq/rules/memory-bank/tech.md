@@ -1,338 +1,187 @@
 # DynamicCRUD - Technology Stack
 
 ## Programming Languages
+- **PHP 8.0+**: Core language (requires modern PHP features)
+  - Uses typed properties, named arguments, match expressions
+  - PSR-4 autoloading standard
+  - Strict types enabled in most files
 
-### PHP 8.0+
-**Primary language** for all library code
-- Modern PHP features: typed properties, constructor property promotion, match expressions
-- Strict typing enabled in all classes
-- PSR-4 autoloading standard
-- Object-oriented architecture
+## Required PHP Extensions
+- **ext-pdo**: Database connectivity (PDO)
+- **ext-fileinfo**: MIME type detection for file uploads (finfo)
+- **ext-json**: JSON parsing for metadata and translations
 
-### JavaScript (ES6+)
-**Client-side validation** in `examples/assets/dynamiccrud.js`
-- Real-time form validation
-- AJAX form submission
-- Image preview functionality
-- DOM manipulation for dynamic feedback
+## Databases Supported
+- **MySQL 5.7+**: Primary database with full feature support
+- **PostgreSQL 12+**: Full support via adapter pattern
+  - Auto-detects database driver from PDO connection
+  - Adapter pattern allows easy extension to SQL Server, SQLite, etc.
 
-### SQL
-**Database language** for MySQL 5.7+
-- DDL scripts for table creation
-- Foreign key constraints
-- ENUM field definitions
-- Audit table schemas
+## Dependencies (Composer)
 
-### CSS3
-**Styling** in `examples/assets/dynamiccrud.css`
-- Responsive form layouts
-- Validation feedback styling
-- Accessibility enhancements
-
-## Core Dependencies
-
-### Required PHP Extensions
-- **ext-pdo**: Database connectivity (PDO MySQL driver)
-- **ext-fileinfo**: Real MIME type detection for file uploads
-- **ext-json**: JSON parsing for metadata in column comments
-
-### Development Dependencies
-- **phpunit/phpunit** ^9.0: Unit testing framework
-
-### Database
-- **MySQL 5.7+**: Primary database system
-- Uses INFORMATION_SCHEMA for schema introspection
-- Requires InnoDB engine for foreign key support
-
-## Build System
-
-### Composer
-**Package manager** for PHP dependencies and autoloading
-
-**Key composer.json sections**:
+### Production Dependencies
 ```json
 {
-  "require": {
-    "php": ">=8.0",
-    "ext-pdo": "*",
-    "ext-fileinfo": "*",
-    "ext-json": "*"
-  },
-  "autoload": {
-    "psr-4": {
-      "DynamicCRUD\\": "src/"
-    }
-  }
+  "php": ">=8.0",
+  "ext-pdo": "*",
+  "ext-fileinfo": "*",
+  "ext-json": "*"
 }
 ```
 
-### Installation Command
-```bash
-composer require dynamiccrud/dynamiccrud
+### Development Dependencies
+```json
+{
+  "phpunit/phpunit": "^9.5 || ^10.0"
+}
 ```
 
-### Autoloading
-PSR-4 standard: `DynamicCRUD\ClassName` maps to `src/ClassName.php`
+## Build System
+- **Composer**: Dependency management and autoloading
+  - Package name: `dynamiccrud/dynamiccrud`
+  - Type: `library`
+  - License: MIT
+  - PSR-4 autoloading: `DynamicCRUD\` → `src/`
+
+## Testing Framework
+- **PHPUnit 9.5+ or 10.0+**: Unit and integration testing
+  - 195 tests across 16 test files
+  - 76% pass rate (149 passing, 40 failing, 6 skipped)
+  - Code coverage tracking (excludes Cache directory)
+  - Test namespace: `DynamicCRUD\Tests\`
 
 ## Development Commands
 
-### Install Dependencies
+### Installation
 ```bash
+# Install dependencies
 composer install
+
+# Install for production (no dev dependencies)
+composer install --no-dev
 ```
 
-### Update Dependencies
+### Testing
 ```bash
-composer update
+# Run all tests
+vendor/bin/phpunit
+
+# Run with detailed output
+vendor/bin/phpunit --testdox
+
+# Run specific test file
+vendor/bin/phpunit tests/FormGeneratorTest.php
+
+# Run with coverage (requires Xdebug)
+vendor/bin/phpunit --coverage-html coverage/
 ```
 
-### Run Tests
+### Windows-specific
 ```bash
-vendor/bin/phpunit tests/
+# Run tests on Windows
+run-tests.bat
+
+# Or use vendor\bin\phpunit.bat directly
+vendor\bin\phpunit.bat
 ```
 
-### Clear Cache
+### Cache Management
 ```bash
+# Clear template cache
 php examples/clear_cache.php
+
+# Or manually delete cache files
+rm -rf cache/templates/*
+rm cache/*.cache
 ```
 
-### Database Setup
+## CI/CD Pipeline (GitHub Actions)
+
+### Workflows
+1. **tests.yml**: Runs PHPUnit tests on PHP 8.0, 8.1, 8.2, 8.3
+2. **code-quality.yml**: Code style and static analysis checks
+3. **release.yml**: Automated releases to Packagist
+
+### Test Environment Variables
+```xml
+<env name="DB_HOST" value="localhost"/>
+<env name="DB_NAME" value="test"/>
+<env name="DB_USER" value="root"/>
+<env name="DB_PASS" value="rootpassword"/>
+```
+
+## Docker Support
+
+### Services (docker-compose.yml)
+- **MySQL 8.0**: Port 3306, database `dynamiccrud_db`
+- **PostgreSQL 15**: Port 5432, database `dynamiccrud_db`
+- **Adminer**: Web-based database management (port 8080)
+
+### Docker Commands
 ```bash
-mysql -u user -p database < examples/setup.sql
-mysql -u user -p database < examples/setup_phase2.sql
-mysql -u user -p database < examples/setup_many_to_many.sql
-mysql -u user -p database < examples/setup_audit.sql
+# Start all services
+docker-compose up -d
+
+# Stop services
+docker-compose down
+
+# View logs
+docker-compose logs -f
+
+# Access MySQL
+docker-compose exec mysql mysql -u root -p
+
+# Access PostgreSQL
+docker-compose exec postgres psql -U postgres -d dynamiccrud_db
 ```
 
-## Architecture Patterns
+## File Structure Standards
+- **PSR-4 Autoloading**: `DynamicCRUD\` namespace maps to `src/` directory
+- **Test Namespace**: `DynamicCRUD\Tests\` maps to `tests/` directory
+- **Naming Convention**: PascalCase for classes, camelCase for methods
+- **File Naming**: Class name matches filename (e.g., `DynamicCRUD.php`)
 
-### Design Patterns Used
-- **Strategy Pattern**: Cache system (CacheStrategy interface)
-- **Hook/Observer Pattern**: Lifecycle events system
-- **Dependency Injection**: PDO connection injection
-- **Single Responsibility**: Each class has one clear purpose
-- **Factory Pattern**: Form element generation
+## Code Quality Tools
+- **PHPUnit**: Unit testing framework
+- **GitHub Actions**: Automated testing and quality checks
+- **Composer Scripts**: Custom commands for development tasks
 
-### Database Patterns
-- **Active Record-like**: Each table maps to CRUD operations
-- **Repository Pattern**: SchemaAnalyzer acts as schema repository
-- **Unit of Work**: Transaction management in CRUDHandler
-
-## Security Technologies
-
-### CSRF Protection
-- Session-based token generation
-- Token validation on all POST requests
-- Automatic token regeneration
-
-### SQL Injection Prevention
-- PDO prepared statements exclusively
-- No string concatenation in queries
-- Parameter binding for all user input
-
-### XSS Prevention
-- htmlspecialchars() for output escaping
-- Input sanitization in SecurityModule
-- Content-Security-Policy headers recommended
-
-### File Upload Security
-- finfo_file() for real MIME type detection
-- File size validation
-- Unique filename generation with uniqid()
-- Configurable allowed MIME types
+## Browser Compatibility
+- **Client-side JavaScript**: ES6+ features (arrow functions, const/let)
+- **CSS**: Modern CSS3 (flexbox, grid, custom properties)
+- **Target Browsers**: Modern browsers (Chrome, Firefox, Safari, Edge)
 
 ## Performance Optimizations
+- **Schema Caching**: File-based cache for database metadata (reduces queries)
+- **Template Caching**: Compiled templates cached to PHP files
+- **Prepared Statements**: All database queries use PDO prepared statements
+- **Lazy Loading**: Components initialized only when needed
 
-### Caching System
-- **FileCacheStrategy**: Stores schema metadata in cache/ directory
-- Reduces INFORMATION_SCHEMA queries
-- Configurable TTL (time-to-live)
-- Cache invalidation on schema changes
-
-### Database Optimization
-- Prepared statement reuse
-- Lazy loading of foreign key data
-- Indexed audit tables
-- Transaction batching for M:N sync
-
-### Code Optimization
-- Minimal object instantiation
-- Efficient array operations
-- Early returns to avoid unnecessary processing
-
-## Testing Framework
-
-### PHPUnit 9.0+
-**Unit testing** for core components
-
-**Test files**:
-- `tests/SchemaAnalyzerTest.php`: Schema introspection tests
-- `tests/ValidationEngineTest.php`: Validation logic tests
-
-**Test coverage**: 98.75% of planned features tested
-
-### Running Tests
-```bash
-vendor/bin/phpunit tests/
-```
-
-## Version Control
-
-### Git
-Repository hosted on GitHub: https://github.com/mcarbonell/DynamicCRUD
-
-### Branching Strategy
-- `main`: Stable releases
-- Feature branches for development
-- Pull requests for contributions
-
-## Package Distribution
-
-### Packagist
-Official PHP package repository: https://packagist.org/packages/dynamiccrud/dynamiccrud
-
-**Installation**:
-```bash
-composer require dynamiccrud/dynamiccrud
-```
-
-### Versioning
-Semantic versioning (SemVer): MAJOR.MINOR.PATCH
-- Current version: 1.0.0
-- Breaking changes increment MAJOR
-- New features increment MINOR
-- Bug fixes increment PATCH
-
-## Development Environment
-
-### Minimum Requirements
-- PHP 8.0 or higher
-- MySQL 5.7 or higher
-- Composer 2.0+
-- Web server (Apache/Nginx) with PHP support
-
-### Recommended Setup
-- PHP 8.1+ for latest features
-- MySQL 8.0+ for better performance
-- Xdebug for debugging
-- PHPStan for static analysis
-
-### IDE Support
-- Full PSR-4 autoloading for IDE autocomplete
-- Type hints for better IDE integration
-- DocBlocks for all public methods
-
-## Client-Side Technologies
-
-### Vanilla JavaScript
-No framework dependencies - pure JavaScript for:
-- Form validation
-- AJAX submissions
-- Dynamic UI updates
-- Image previews
-
-### CSS Features
-- Flexbox for layouts
-- CSS transitions for animations
-- Media queries for responsiveness
-- CSS variables for theming
-
-## Database Schema Introspection
-
-### INFORMATION_SCHEMA Queries
-Used to analyze table structure:
-- `INFORMATION_SCHEMA.COLUMNS`: Column definitions
-- `INFORMATION_SCHEMA.KEY_COLUMN_USAGE`: Foreign keys
-- `INFORMATION_SCHEMA.TABLE_CONSTRAINTS`: Constraints
-
-### Metadata Storage
-JSON in `COLUMN_COMMENT` field:
-```sql
-ALTER TABLE users 
-MODIFY COLUMN email VARCHAR(255) 
-COMMENT '{"type": "email", "label": "Email Address"}';
-```
-
-## Transaction Management
-
-### PDO Transactions
-All write operations wrapped in transactions:
-```php
-$pdo->beginTransaction();
-try {
-    // INSERT/UPDATE/DELETE
-    // Audit logging
-    // M:N sync
-    $pdo->commit();
-} catch (Exception $e) {
-    $pdo->rollBack();
-    throw $e;
-}
-```
-
-### ACID Compliance
-- **Atomicity**: All-or-nothing operations
-- **Consistency**: Data integrity maintained
-- **Isolation**: Concurrent transaction safety
-- **Durability**: Committed changes persist
-
-## File System Operations
-
-### Upload Directory
-Default: `uploads/` (configurable)
-- Requires write permissions
-- Unique filenames prevent conflicts
-- Organized by upload date possible
-
-### Cache Directory
-Default: `cache/` (configurable)
-- Stores serialized schema metadata
-- Automatic cleanup on cache clear
-- File-based locking for concurrency
-
-## API Design
-
-### Public API Methods
-```php
-// DynamicCRUD class
-__construct(PDO $pdo, string $table)
-renderForm(?int $id = null): string
-handleSubmission(): array
-renderList(int $page = 1, int $perPage = 10): string
-addManyToMany(...): self
-addHook(string $event, callable $callback): self
-enableAudit(int $userId): self
-```
-
-### Fluent Interface
-Method chaining supported:
-```php
-$crud->addHook('beforeSave', $callback)
-     ->enableAudit($userId)
-     ->handleSubmission();
-```
-
-## Error Handling
-
-### Exception Types
-- PDOException: Database errors
-- RuntimeException: Configuration errors
-- InvalidArgumentException: Invalid parameters
-
-### Error Reporting
-- Detailed error messages in development
-- Generic messages in production
-- Logging via error_log()
+## Security Technologies
+- **CSRF Tokens**: Session-based token generation and validation
+- **Prepared Statements**: PDO parameterized queries (SQL injection prevention)
+- **finfo**: Real MIME type detection for file uploads (not just extension)
+- **htmlspecialchars**: XSS prevention for output escaping
+- **Transactions**: Database transactions with automatic rollback
 
 ## Internationalization (i18n)
+- **Format**: JSON files in `src/I18n/locales/`
+- **Languages**: English (en), Spanish (es), French (fr)
+- **Detection**: URL parameter (?lang=), session, or browser Accept-Language header
+- **Client-side**: JavaScript translations embedded in generated forms
 
-### Current Status
-- English documentation complete
-- Spanish documentation complete
-- Code messages in English
-- i18n support planned for v2.0
+## Template System
+- **Syntax**: Blade-like (Laravel-inspired)
+- **Features**: @if, @foreach, @extends, @section, @yield, @include
+- **Escaping**: {{ $var }} (escaped), {!! $var !!} (raw)
+- **Caching**: Compiled templates stored in `cache/templates/`
 
-### Future i18n Support
-- Translatable validation messages
-- Locale-aware date/number formatting
-- Multi-language form labels
+## Version Control
+- **Git**: Source control with GitHub hosting
+- **Branching**: Feature branches, main branch for releases
+- **Tagging**: Semantic versioning (v1.0.0, v1.1.0, etc.)
+
+## Package Distribution
+- **Packagist**: Official Composer package repository
+- **GitHub Releases**: Tagged releases with changelogs
+- **Badges**: Tests, code quality, version, downloads, license

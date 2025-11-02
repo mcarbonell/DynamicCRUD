@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DynamicCRUD - Examples</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 20px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h2 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .examples {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .example-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .example-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+
+        .example-card h3 {
+            font-size: 18px;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .example-card p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .example-card a {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .example-card a:hover {
+            background: #5568d3;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .setup-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+
+        .setup-box h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .setup-box code {
+            background: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            background: #f8f9fa;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 DynamicCRUD Examples</h1>
+            <p>Progressive examples from basic to advanced</p>
+        </div>
+
+        <div class="content">
+            <div class="setup-box">
+                <h3>⚙️ Setup Required</h3>
+                <p>Before running examples, setup your database:</p>
+                <p><code>mysql -u root -p test < setup/mysql.sql</code></p>
+                <p>Then start PHP server: <code>php -S localhost:8000</code></p>
+            </div>
+
+            <div class="section">
+                <h2>01. Basic CRUD <span class="badge">Start Here</span></h2>
+                <div class="examples">
+                    <div class="example-card">
+                        <h3>Basic Example</h3>
+                        <p>Complete CRUD in just 3 lines of code. Zero configuration needed!</p>
+                        <a href="01-basic/">View Example →</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>02. Relationships</h2>
+                <div class="examples">
+                    <div class="example-card">
+                        <h3>Foreign Keys</h3>
+                        <p>Automatic dropdown generation for foreign key relationships.</p>
+                        <a href="02-relationships/foreign-keys.php">View Example →</a>
+                    </div>
+                    <div class="example-card">
+                        <h3>Many-to-Many</h3>
+                        <p>M:N relationships with multi-select UI and automatic pivot table sync.</p>
+                        <a href="02-relationships/many-to-many.php">View Example →</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>03. Customization</h2>
+                <div class="examples">
+                    <div class="example-card">
+                        <h3>Metadata</h3>
+                        <p>Control field behavior with JSON metadata. 16+ options available.</p>
+                        <a href="03-customization/metadata.php">View Example →</a>
+                    </div>
+                    <div class="example-card">
+                        <h3>Advanced Inputs</h3>
+                        <p>HTML5 input types: color, tel, time, week, month, range, and more.</p>
+                        <a href="03-customization/advanced-inputs.php">View Example →</a>
+                    </div>
+                    <div class="example-card">
+                        <h3>File Uploads</h3>
+                        <p>Secure file upload with MIME validation and size checks.</p>
+                        <a href="03-customization/file-uploads.php">View Example →</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>04. Advanced Features</h2>
+                <div class="examples">
+                    <div class="example-card">
+                        <h3>Hooks System</h3>
+                        <p>10 lifecycle hooks for custom logic. Auto-generate slugs, log changes, etc.</p>
+                        <a href="04-advanced/hooks.php">View Example →</a>
+                    </div>
+                    <div class="example-card">
+                        <h3>Virtual Fields</h3>
+                        <p>Fields that appear in forms but aren't stored. Password confirmation, terms, etc.</p>
+                        <a href="04-advanced/virtual-fields.php">View Example →</a>
+                    </div>
+                    <div class="example-card">
+                        <h3>Custom Validation</h3>
+                        <p>Advanced validation rules using hooks. Domain whitelists, password strength, etc.</p>
+                        <a href="04-advanced/validation.php">View Example →</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>05. Production Features</h2>
+                <div class="examples">
+                    <div class="example-card">
+                        <h3>Internationalization</h3>
+                        <p>Multi-language support (EN, ES, FR) with auto-detection.</p>
+                        <a href="05-features/i18n.php">View Example →</a>
+                    </div>
+                    <div class="example-card">
+                        <h3>Template System</h3>
+                        <p>Blade-like templates with layout inheritance and partials.</p>
+                        <a href="05-features/templates.php">View Example →</a>
+                    </div>
+                    <div class="example-card">
+                        <h3>Audit Logging</h3>
+                        <p>Track all database changes with user ID, IP, and JSON diffs.</p>
+                        <a href="05-features/audit.php">View Example →</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>📚 Documentation</h2>
+                <div class="examples">
+                    <div class="example-card">
+                        <h3>Setup Guide</h3>
+                        <p>Database setup instructions for MySQL and PostgreSQL.</p>
+                        <a href="setup/README.md">View Guide →</a>
+                    </div>
+                    <div class="example-card">
+                        <h3>Main README</h3>
+                        <p>Complete documentation and learning path.</p>
+                        <a href="README.md">View README →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>DynamicCRUD</strong> - Automatic CRUD forms from database schema</p>
+            <p>Made with ❤️ by Mario Raúl Carbonell Martínez</p>
+        </div>
+    </div>
+</body>
+
+</html>

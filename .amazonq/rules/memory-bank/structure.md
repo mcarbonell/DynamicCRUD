@@ -4,247 +4,158 @@
 
 ```
 dynamicCRUD/
-├── src/                          # Core library source code
-│   ├── Cache/                    # Caching subsystem
-│   │   ├── CacheStrategy.php     # Cache interface
-│   │   └── FileCacheStrategy.php # File-based cache implementation
-│   ├── DynamicCRUD.php           # Main public API class
-│   ├── CRUDHandler.php           # CRUD operations, hooks, transactions
-│   ├── SchemaAnalyzer.php        # Database schema introspection
-│   ├── FormGenerator.php         # HTML form generation
-│   ├── ValidationEngine.php      # Server-side validation
-│   ├── SecurityModule.php        # CSRF, sanitization, security
-│   ├── ListGenerator.php         # List views with pagination
-│   ├── FileUploadHandler.php     # File upload processing
-│   └── AuditLogger.php           # Change tracking system
-├── examples/                     # Working demonstrations
-│   ├── assets/                   # Client-side resources
-│   │   ├── dynamiccrud.css       # Styling
-│   │   └── dynamiccrud.js        # Client validation
-│   ├── uploads/                  # File upload destination
-│   ├── *.php                     # 8 example files
-│   └── setup*.sql                # Database setup scripts
-├── docs/                         # User documentation
-│   ├── HOOKS.md                  # Hooks system guide
-│   ├── MANY_TO_MANY.md           # M:N relationships guide
-│   └── CUSTOMIZATION.md          # Metadata customization guide
-├── tests/                        # Unit tests
-│   ├── SchemaAnalyzerTest.php
-│   └── ValidationEngineTest.php
-├── cache/                        # Schema cache storage
-├── .github/                      # GitHub templates
-│   └── ISSUE_TEMPLATE/
-├── local_docs/                   # Internal development docs
-├── composer.json                 # Package definition
-├── README.md                     # Main documentation
-└── LICENSE                       # MIT license
+├── src/                    # Core library source code (PSR-4: DynamicCRUD\)
+│   ├── Cache/             # Caching strategies for schema metadata
+│   ├── Database/          # Database adapter pattern (MySQL, PostgreSQL)
+│   ├── I18n/              # Internationalization (Translator + locales)
+│   ├── Template/          # Blade-like template engine
+│   └── *.php              # Core classes (DynamicCRUD, FormGenerator, etc.)
+├── tests/                 # PHPUnit test suite (195 tests)
+├── examples/              # 11 working demo files + SQL setup scripts
+├── docs/                  # Technical documentation (8 guides)
+├── templates/             # Default Blade templates (forms, layouts)
+├── cache/                 # Template and schema cache storage
+├── uploads/               # File upload destination
+└── vendor/                # Composer dependencies
 ```
 
 ## Core Components
 
-### DynamicCRUD (Main API)
-**File**: `src/DynamicCRUD.php`
-**Purpose**: Public-facing API and orchestration layer
-**Responsibilities**:
-- Instantiates and coordinates all subsystems
-- Provides simple methods: renderForm(), handleSubmission(), renderList()
-- Manages configuration and options
-- Delegates to specialized components
+### 1. Entry Point
+- **DynamicCRUD.php**: Main facade class, orchestrates all components
+  - Initializes database adapter, schema analyzer, form generator, CRUD handler
+  - Provides public API: `renderForm()`, `handleSubmission()`, `addHook()`, `addManyToMany()`
+  - Manages lifecycle hooks and virtual fields
 
-### CRUDHandler
-**File**: `src/CRUDHandler.php`
-**Purpose**: CRUD operation execution and lifecycle management
-**Responsibilities**:
-- Executes INSERT, UPDATE, DELETE operations
-- Manages database transactions
-- Implements hooks/events system (10 hooks)
-- Handles many-to-many relationship synchronization
-- Coordinates with AuditLogger for change tracking
+### 2. Database Layer (Adapter Pattern)
+- **Database/DatabaseAdapter.php**: Interface for database operations
+- **Database/MySQLAdapter.php**: MySQL-specific implementation
+- **Database/PostgreSQLAdapter.php**: PostgreSQL-specific implementation
+  - Auto-detects driver from PDO connection
+  - Abstracts schema queries, foreign key detection, ENUM handling
 
-### SchemaAnalyzer
-**File**: `src/SchemaAnalyzer.php`
-**Purpose**: Database schema introspection
-**Responsibilities**:
-- Queries INFORMATION_SCHEMA for table structure
-- Detects foreign key relationships
-- Parses JSON metadata from column comments
-- Identifies primary keys and constraints
-- Caches schema information for performance
+### 3. Schema Analysis
+- **SchemaAnalyzer.php**: Extracts database schema metadata
+  - Reads table columns, types, constraints, foreign keys
+  - Parses JSON metadata from column comments
+  - Caches schema data for performance
 
-### FormGenerator
-**File**: `src/FormGenerator.php`
-**Purpose**: HTML form rendering
-**Responsibilities**:
-- Generates form HTML from schema metadata
-- Creates appropriate input types for each field
-- Renders foreign key dropdowns
-- Generates many-to-many multi-selects
-- Includes CSRF tokens
-- Adds accessibility attributes (ARIA labels)
+### 4. Form Generation
+- **FormGenerator.php**: Generates HTML forms from schema
+  - Creates input fields based on column types and metadata
+  - Handles foreign key dropdowns, ENUM selects, file inputs
+  - Supports 16+ metadata options (type, label, placeholder, min, max, etc.)
+  - Generates client-side JavaScript validation
 
-### ValidationEngine
-**File**: `src/ValidationEngine.php`
-**Purpose**: Server-side data validation
-**Responsibilities**:
-- Type validation (email, URL, number formats)
-- Length validation (min/max, minlength)
-- Required field checking
-- ENUM value validation
-- Foreign key existence validation
-- Custom validation via metadata
+### 5. CRUD Operations
+- **CRUDHandler.php**: Handles Create, Read, Update, Delete operations
+  - Executes INSERT/UPDATE/DELETE with prepared statements
+  - Manages transactions with automatic rollback
+  - Handles many-to-many relationship persistence
+  - Integrates with hooks system
 
-### SecurityModule
-**File**: `src/SecurityModule.php`
-**Purpose**: Security features
-**Responsibilities**:
-- CSRF token generation and validation
-- Input sanitization (XSS prevention)
-- Session management for tokens
-- Security header recommendations
+### 6. Validation
+- **ValidationEngine.php**: Server-side validation
+  - Validates required fields, data types, constraints
+  - Checks foreign key references
+  - Validates file uploads (MIME type, size)
+  - Returns structured error messages
 
-### FileUploadHandler
-**File**: `src/FileUploadHandler.php`
-**Purpose**: File upload processing
-**Responsibilities**:
-- Real MIME type validation using finfo
-- File size validation
-- Unique filename generation
-- File movement to upload directory
-- Error handling for upload failures
+### 7. Security
+- **SecurityModule.php**: Security features
+  - CSRF token generation and validation
+  - Input sanitization (XSS prevention)
+  - Session management for tokens
 
-### ListGenerator
-**File**: `src/ListGenerator.php`
-**Purpose**: Data listing and pagination
-**Responsibilities**:
-- Generates paginated record lists
-- Provides edit/delete action links
-- Handles sorting and filtering
-- Renders navigation controls
+### 8. File Handling
+- **FileUploadHandler.php**: Secure file upload processing
+  - Real MIME type validation using `finfo`
+  - File size checks
+  - Unique filename generation
+  - Configurable upload directory
 
-### AuditLogger
-**File**: `src/AuditLogger.php`
-**Purpose**: Change tracking
-**Responsibilities**:
-- Logs all create/update/delete operations
-- Records user ID, IP address, timestamp
-- Stores old and new values as JSON
-- Maintains audit trail table
+### 9. Audit System
+- **AuditLogger.php**: Change tracking
+  - Logs all CRUD operations (create, update, delete)
+  - Tracks user ID, IP address, timestamp
+  - Stores old/new values as JSON
+  - Requires `audit_log` table
 
-### Cache System
-**Files**: `src/Cache/CacheStrategy.php`, `src/Cache/FileCacheStrategy.php`
-**Purpose**: Performance optimization
-**Responsibilities**:
-- Caches database schema metadata
-- Implements strategy pattern for different cache backends
-- File-based implementation included
-- Reduces repeated INFORMATION_SCHEMA queries
+### 10. Internationalization
+- **I18n/Translator.php**: Multi-language support
+  - Auto-detects language from URL, session, or browser
+  - Loads translations from JSON files (locales/)
+  - Supports 3 languages: English, Spanish, French
+  - Provides client-side and server-side translation
+
+### 11. Template System
+- **Template/TemplateEngine.php**: Interface for template engines
+- **Template/BladeTemplate.php**: Blade-like template implementation
+  - Supports @if, @foreach, @extends, @section, @yield, @include
+  - Automatic escaping ({{ }} vs {!! !!})
+  - File caching for performance
+  - Layout inheritance and partials
+
+### 12. Virtual Fields
+- **VirtualField.php**: Non-database fields
+  - Defines fields not stored in database (e.g., password_confirmation)
+  - Custom validators and transformers
+  - Used for UI-only fields (terms acceptance, captcha)
+
+### 13. Caching
+- **Cache/CacheStrategy.php**: Interface for caching strategies
+- **Cache/FileCacheStrategy.php**: File-based cache implementation
+  - Caches schema metadata to reduce database queries
+  - Configurable TTL (time-to-live)
+
+### 14. List Generation
+- **ListGenerator.php**: Generates data tables/lists
+  - Creates HTML tables from database records
+  - Supports pagination, sorting, filtering
+  - Integrates with CRUD operations (edit/delete links)
 
 ## Architectural Patterns
 
-### Strategy Pattern
-Used in caching system - CacheStrategy interface allows different cache implementations (file, Redis, Memcached) without changing core code.
+### Design Patterns Used
+1. **Facade Pattern**: DynamicCRUD class provides simplified interface
+2. **Adapter Pattern**: Database adapters for MySQL/PostgreSQL
+3. **Strategy Pattern**: Cache strategies, template engines
+4. **Observer Pattern**: Hooks/events system for lifecycle callbacks
+5. **Builder Pattern**: FormGenerator builds complex HTML forms
+6. **Template Method**: CRUDHandler defines CRUD workflow with hook points
 
-### Hook/Event Pattern
-10 lifecycle hooks allow extending functionality without modifying library code. Hooks receive data and can modify or cancel operations.
+### Data Flow
+```
+User Request → DynamicCRUD (facade)
+  ↓
+  ├→ SchemaAnalyzer → DatabaseAdapter → Database
+  ├→ FormGenerator → HTML Form
+  ├→ ValidationEngine → Validation Results
+  ├→ CRUDHandler → DatabaseAdapter → Database
+  ├→ SecurityModule → CSRF Validation
+  ├→ FileUploadHandler → File System
+  ├→ AuditLogger → audit_log table
+  └→ Translator → Localized Strings
+```
 
-### Single Responsibility Principle
-Each class has one clear purpose - schema analysis, form generation, validation, etc. This makes the codebase maintainable and testable.
-
-### Dependency Injection
-PDO connection injected into DynamicCRUD constructor, allowing different database connections and easier testing.
-
-### Transaction Management
-All write operations wrapped in database transactions with automatic rollback on errors, ensuring data integrity.
-
-## Data Flow
-
-### Form Rendering Flow
-1. User requests form → DynamicCRUD::renderForm()
-2. SchemaAnalyzer retrieves/caches table structure
-3. SecurityModule generates CSRF token
-4. FormGenerator creates HTML with metadata
-5. HTML returned to user
-
-### Form Submission Flow
-1. POST data → DynamicCRUD::handleSubmission()
-2. SecurityModule validates CSRF token
-3. SecurityModule sanitizes input data
-4. Hook: beforeValidate (modify data)
-5. ValidationEngine validates all fields
-6. Hook: afterValidate (cross-field validation)
-7. Hook: beforeSave (common pre-save logic)
-8. Hook: beforeCreate OR beforeUpdate (specific logic)
-9. Transaction BEGIN
-10. CRUDHandler executes INSERT/UPDATE
-11. AuditLogger records change (if enabled)
-12. Many-to-many sync (if configured)
-13. Hook: afterCreate OR afterUpdate
-14. Hook: afterSave
-15. Transaction COMMIT
-16. Return success with record ID
-
-### Delete Flow
-1. Delete request → DynamicCRUD::handleSubmission()
-2. Hook: beforeDelete (check dependencies)
-3. Transaction BEGIN
-4. CRUDHandler executes DELETE
-5. AuditLogger records deletion
-6. Hook: afterDelete (cleanup files)
-7. Transaction COMMIT
+### Component Relationships
+- **DynamicCRUD** orchestrates all components
+- **SchemaAnalyzer** depends on **DatabaseAdapter**
+- **FormGenerator** uses **SchemaAnalyzer** output and **Translator**
+- **CRUDHandler** uses **ValidationEngine**, **SecurityModule**, **AuditLogger**
+- **ValidationEngine** uses **SchemaAnalyzer** metadata
+- All components can use **Cache** for performance
 
 ## Configuration Files
+- **composer.json**: Package definition, dependencies, autoloading (PSR-4)
+- **phpunit.xml**: Test suite configuration, coverage settings
+- **docker-compose.yml**: MySQL and PostgreSQL containers for development
+- **.github/workflows/**: CI/CD pipelines (tests, code quality, releases)
 
-### composer.json
-Defines package metadata, dependencies, and autoloading:
-- PHP 8.0+ requirement
-- PDO, fileinfo, JSON extensions required
-- PSR-4 autoloading for DynamicCRUD namespace
-- PHPUnit for testing
-
-### Database Setup Scripts
-Located in `examples/`:
-- `setup.sql`: Basic tables (users, categories, posts)
-- `setup_phase2.sql`: Foreign key relationships
-- `setup_phase3.sql`: File upload fields
-- `setup_phase4.sql`: ENUM fields
-- `setup_many_to_many.sql`: M:N pivot tables
-- `setup_audit.sql`: Audit logging table
-
-## Example Files
-
-### Basic Examples
-- `index.php`: Simple user CRUD
-- `categories.php`: Complete CRUD with delete
-- `posts.php`: Foreign key relationships
-
-### Advanced Examples
-- `products.php`: File uploads
-- `contacts.php`: Client validation and UX
-- `hooks_demo.php`: All 10 hooks demonstrated
-- `many_to_many_demo.php`: M:N relationships
-- `audit_demo.php`: Change tracking
-
-### Utility Examples
-- `clear_cache.php`: Cache management
-- `debug_csrf.php`: CSRF token debugging
-- `validation_demo.php`: Validation testing
-
-## Namespace Structure
-
-```
-DynamicCRUD\
-├── DynamicCRUD           # Main class
-├── CRUDHandler
-├── SchemaAnalyzer
-├── FormGenerator
-├── ValidationEngine
-├── SecurityModule
-├── ListGenerator
-├── FileUploadHandler
-├── AuditLogger
-└── Cache\
-    ├── CacheStrategy     # Interface
-    └── FileCacheStrategy # Implementation
-```
-
-PSR-4 autoloading maps `DynamicCRUD\` namespace to `src/` directory.
+## Extension Points
+1. **Database Adapters**: Implement `DatabaseAdapter` interface for new databases
+2. **Cache Strategies**: Implement `CacheStrategy` interface for Redis, Memcached
+3. **Template Engines**: Implement `TemplateEngine` interface for Twig, Smarty
+4. **Hooks**: Register callbacks at 10 lifecycle points
+5. **Virtual Fields**: Add custom non-database fields with validators
+6. **Translations**: Add new languages via JSON files in `I18n/locales/`

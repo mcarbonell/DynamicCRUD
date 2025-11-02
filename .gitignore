@@ -4,18 +4,23 @@ vendor/
 # Cache
 cache/*.json
 cache/*.cache
+cache/*
 !cache/.gitkeep
 
 # Uploads
 uploads/*
 !uploads/.gitkeep
-
+examples/uploads/
+examples/uploads/*
+!examples/uploads/.gitkeep
 # Private documents
 local_docs/
 
 # IDE
 .idea/
 .vscode/
+.amazonq/
+.amazonq/rules/
 *.swp
 *.swo
 *~
@@ -38,3 +43,5 @@ tests/temp_cache/
 # Composer lock (allow flexibility in CI)
 # composer.lock is tracked for production stability
 # but CI uses composer update for multi-version testing
+.amazonq/rules/memory-bank/guidelines.md
+.amazonq/rules/memory-bank/structure.md

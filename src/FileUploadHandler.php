@@ -62,7 +62,8 @@ class FileUploadHandler
             throw new \Exception("Error al mover el archivo subido");
         }
 
-        return 'uploads/' . $filename;
+        // Return web-accessible path (relative to examples/)
+        return '../uploads/' . $filename;
     }
 
     private function getUploadErrorMessage(int $errorCode): string
