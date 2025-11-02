@@ -243,7 +243,7 @@ $crud->addManyToMany(
 - **Lines of code**: ~3,500
 - **Examples**: 8
 - **Documents**: 7
-- **Tests**: 0 (pending)
+- **Tests**: 113 (95.6% passing)
 
 ### Features
 - **Hooks**: 10
@@ -298,7 +298,7 @@ $crud->addManyToMany(
 
 ### High Priority
 - [ ] PostgreSQL support (Adapter pattern)
-- [ ] Automated tests (PHPUnit)
+- [x] Automated tests (PHPUnit) - 113 tests, 95.6% passing
 - [ ] Virtual fields (password confirmation)
 
 ### Medium Priority

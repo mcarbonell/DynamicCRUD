@@ -15,6 +15,25 @@ Comprehensive PHPUnit test suite for DynamicCRUD library covering core functiona
 - Nullable fields handling
 - Valid data acceptance
 
+### ✅ FormGenerator (22/22 tests - 100%)
+- Basic form rendering
+- CSRF token inclusion
+- Text/email/number inputs
+- Required attributes
+- Existing data population
+- Hidden ID fields
+- Submit buttons
+- Labels and custom labels
+- Tooltips
+- Min/max/minlength attributes
+- Textarea rendering
+- ENUM select rendering
+- Hidden fields
+- File inputs with accept attribute
+- Multipart form encoding
+- Asset inclusion (CSS/JS)
+- HTML escaping
+
 ### ✅ SchemaAnalyzer (7/8 tests - 87.5%)
 - Table schema retrieval
 - Primary key detection
@@ -76,11 +95,11 @@ Update environment variables in `phpunit.xml` to match your setup.
 
 ## Test Statistics
 
-- **Total Tests**: 29
-- **Passing**: 24 (82.8%)
-- **Skipped**: 5 (17.2%)
+- **Total Tests**: 113
+- **Passing**: 108 (95.6%)
+- **Skipped**: 5 (4.4%)
 - **Failed**: 0 (0%)
-- **Assertions**: 55+
+- **Assertions**: 239+
 
 ## Skipped Tests
 
@@ -104,11 +123,58 @@ mysql -u root -p test < examples/setup.sql
 mysql -u root -p test < examples/setup_phase2.sql
 ```
 
+### ✅ CRUDHandler (20/20 tests - 100%)
+- Constructor and initialization
+- All 10 lifecycle hooks (before/after Validate, Save, Create, Update, Delete)
+- Create/Update/Delete operations
+- Transaction rollback on error
+- CSRF token validation
+- Validation failure handling
+- Fluent interface
+- Many-to-many relationship configuration
+- Audit logging enablement
+
+### ✅ AuditLogger (6/6 tests - 100%)
+- Log create operations
+- Log update operations with old/new values
+- Log delete operations
+- User ID tracking
+- History retrieval (multiple entries, chronological order)
+- Empty history for non-existent records
+
+### ✅ ListGenerator (13/13 tests - 100%)
+- Default pagination (20 per page)
+- Custom per-page limits
+- Page navigation (first, middle, last)
+- Filtering by column values
+- Sorting (ASC/DESC)
+- Table HTML rendering
+- Empty state handling
+- Pagination controls rendering
+
+### ✅ FileCacheStrategy (9/9 tests - 100%)
+- Directory creation
+- Set and get operations
+- Non-existent key handling
+- TTL expiration
+- Cache invalidation
+- Clear all cache
+- Multiple keys management
+- Overwrite existing entries
+
+### ✅ DynamicCRUD (14/14 tests - 100%) - Integration Tests
+- Constructor with/without cache
+- Form rendering (create/edit)
+- Complete CRUD workflows (create, update, delete)
+- List operations with pagination
+- Hooks integration
+- Fluent interface chaining
+- Audit logging integration
+- Many-to-many configuration
+- Validation failures
+- CSRF protection
+
 ## Future Test Coverage
 
 Planned for future releases:
-- CRUDHandler (hooks, transactions, M:N)
-- FormGenerator (HTML generation)
-- AuditLogger (change tracking)
-- DynamicCRUD (integration tests)
-- Cache strategies
+- Additional cache strategies (Redis, Memcached)

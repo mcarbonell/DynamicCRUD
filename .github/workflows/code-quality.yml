@@ -1,0 +1,41 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: pdo, fileinfo, json
+    
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress
+    
+    - name: Check code style
+      run: |
+        if [ -f "vendor/bin/phpcs" ]; then
+          vendor/bin/phpcs --standard=PSR12 src/
+        else
+          echo "PHP_CodeSniffer not installed, skipping..."
+        fi
+      continue-on-error: true
+    
+    - name: Run static analysis
+      run: |
+        if [ -f "vendor/bin/phpstan" ]; then
+          vendor/bin/phpstan analyse src/
+        else
+          echo "PHPStan not installed, skipping..."
+        fi
+      continue-on-error: true

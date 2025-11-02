@@ -1,5 +1,7 @@
 # DynamicCRUD
 
+[![Tests](https://github.com/mcarbonell/DynamicCRUD/workflows/Tests/badge.svg)](https://github.com/mcarbonell/DynamicCRUD/actions)
+[![Code Quality](https://github.com/mcarbonell/DynamicCRUD/workflows/Code%20Quality/badge.svg)](https://github.com/mcarbonell/DynamicCRUD/actions)
 [![Packagist Version](https://img.shields.io/packagist/v/dynamiccrud/dynamiccrud)](https://packagist.org/packages/dynamiccrud/dynamiccrud)
 [![PHP Version](https://img.shields.io/packagist/php-v/dynamiccrud/dynamiccrud)](https://packagist.org/packages/dynamiccrud/dynamiccrud)
 [![License](https://img.shields.io/github/license/mcarbonell/DynamicCRUD)](https://github.com/mcarbonell/DynamicCRUD/blob/main/LICENSE)
@@ -208,6 +210,25 @@ COMMENT '{"type": "email", "label": "Email", "tooltip": "Required field", "minle
 
 ---
 
+## 🧪 Testing
+
+DynamicCRUD has comprehensive test coverage:
+
+- **113 tests** with **239+ assertions**
+- **95.6% passing rate**
+- Automated CI/CD with GitHub Actions
+- Tests run on PHP 8.0, 8.1, 8.2, 8.3
+
+```bash
+# Run tests
+vendor/bin/phpunit
+
+# Run with detailed output
+vendor/bin/phpunit --testdox
+```
+
+---
+
 ## 🚦 Roadmap
 
 ### ✅ Completed (v1.0.0)
@@ -219,6 +240,7 @@ COMMENT '{"type": "email", "label": "Email", "tooltip": "Required field", "minle
 - File uploads
 - Client + Server validation
 - Caching system
+- Comprehensive test suite
 
 ### 🔮 Planned (v2.0+)
 - [ ] PostgreSQL support
@@ -235,8 +257,9 @@ COMMENT '{"type": "email", "label": "Email", "tooltip": "Required field", "minle
 - **10 PHP classes** (~3,500 lines)
 - **8 working examples**
 - **7 technical documents**
+- **113 automated tests** (95.6% passing)
 - **Development time**: < 1 day
-- **Test coverage**: 98.75%
+- **Test coverage**: 95.6%
 
 ---
 

@@ -1,0 +1,67 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        php-version: ['8.0', '8.1', '8.2', '8.3']
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-version }}
+        extensions: pdo, pdo_mysql, fileinfo, json
+        coverage: none
+    
+    - name: Validate composer.json
+      run: composer validate --strict
+    
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress
+    
+    - name: Wait for MySQL
+      run: |
+        until mysqladmin ping -h 127.0.0.1 -P 3306 -u root -prootpassword --silent; do
+          echo 'Waiting for MySQL...'
+          sleep 2
+        done
+    
+    - name: Setup database
+      run: |
+        mysql -h 127.0.0.1 -P 3306 -u root -prootpassword test < examples/setup.sql
+        mysql -h 127.0.0.1 -P 3306 -u root -prootpassword test < examples/setup_phase2.sql
+        mysql -h 127.0.0.1 -P 3306 -u root -prootpassword test < examples/setup_many_to_many.sql
+        mysql -h 127.0.0.1 -P 3306 -u root -prootpassword test < examples/setup_audit.sql
+    
+    - name: Run test suite
+      run: vendor/bin/phpunit --testdox
+      env:
+        DB_HOST: 127.0.0.1
+        DB_NAME: test
+        DB_USER: root
+        DB_PASS: rootpassword
