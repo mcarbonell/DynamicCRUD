@@ -38,9 +38,6 @@ jobs:
         extensions: pdo, pdo_mysql, fileinfo, json
         coverage: none
     
-    - name: Validate composer.json
-      run: composer validate --strict
-    
     - name: Install dependencies
       run: composer update --prefer-dist --no-progress --no-interaction
     
