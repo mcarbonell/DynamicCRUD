@@ -50,9 +50,7 @@ $sqlOutput .= "-- --------------------------------------------------------\n\n";
 $sqlOutput .= "SET NAMES $dbCharset;\n";
 $sqlOutput .= "SET FOREIGN_KEY_CHECKS = 0;\n\n";
 
-// Obtener todas las tablas de la base de datos
-$tables = $pdo->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
-
+// 1. VOLCADO DE ESQUEMAS
 // Iterar sobre cada tabla para obtener su estructura
 foreach ($tables as $tableName) {
     $sqlOutput .= "-- --------------------------------------------------------\n";
@@ -62,16 +60,67 @@ foreach ($tables as $tableName) {
     // El comando `SHOW CREATE TABLE` devuelve la estructura completa, incluyendo comentarios.
     $stmt = $pdo->query("SHOW CREATE TABLE `$tableName`");
     $createTableSql = $stmt->fetch(PDO::FETCH_ASSOC)['Create Table'];
-
+    
     $sqlOutput .= "DROP TABLE IF EXISTS `$tableName`;\n";
     $sqlOutput .= $createTableSql . ";\n\n";
 }
 
+// 2. VOLCADO DE DATOS
+$sqlOutput .= "\n-- --------------------------------------------------------\n";
+$sqlOutput .= "-- Volcado de datos para las tablas\n";
+$sqlOutput .= "-- --------------------------------------------------------\n\n";
+
+foreach ($tables as $tableName) {
+    try {
+        $stmt = $pdo->query("SELECT COUNT(*) FROM `$tableName`");
+        if ($stmt->fetchColumn() == 0) {
+            continue; // Saltar tablas vacías
+        }
+
+        $sqlOutput .= "-- Volcando datos para la tabla `$tableName`\n";
+        
+        $dataStmt = $pdo->query("SELECT * FROM `$tableName`");
+        $rows = $dataStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (empty($rows)) {
+            continue;
+        }
+
+        // Obtener nombres de columnas y escaparlos
+        $columnNames = array_keys($rows[0]);
+        $escapedColumnNames = '`' . implode('`, `', $columnNames) . '`';
+        $insertPrefix = "INSERT INTO `$tableName` ($escapedColumnNames) VALUES \n";
+
+        // Agrupar los valores en lotes para no crear INSERTs gigantes
+        $chunkSize = 100; // 100 filas por sentencia INSERT
+        $valueChunks = array_chunk($rows, $chunkSize, true);
+
+        foreach ($valueChunks as $chunk) {
+            $valueStrings = [];
+            foreach ($chunk as $row) {
+                $rowValues = [];
+                foreach ($columnNames as $colName) {
+                    if ($row[$colName] === null) {
+                        $rowValues[] = "NULL";
+                    } else {
+                        // Usar PDO::quote para escapar correctamente los valores y añadir comillas
+                        $rowValues[] = $pdo->quote($row[$colName]);
+                    }
+                }
+                $valueStrings[] = "(" . implode(',', $rowValues) . ")";
+            }
+            $sqlOutput .= $insertPrefix . implode(",\n", $valueStrings) . ";\n\n";
+        }
+    } catch (\PDOException $e) {
+        $sqlOutput .= "-- AVISO: No se pudieron volcar los datos de la tabla `$tableName`. Error: {$e->getMessage()}\n\n";
+    }
+}
+
+
 $sqlOutput .= "SET FOREIGN_KEY_CHECKS = 1;\n";
 
 // Enviar la salida
-if (php_sapi_name() == 'cli') {
-    // Si se ejecuta desde la línea de comandos, simplemente imprimir
+if (php_sapi_name() == 'cli') {    // Si se ejecuta desde la línea de comandos, simplemente imprimir
     echo $sqlOutput;
 } else {
     // Si se ejecuta desde un navegador, forzar la descarga del archivo
