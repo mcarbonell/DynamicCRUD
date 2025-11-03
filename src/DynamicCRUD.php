@@ -375,4 +375,27 @@ class DynamicCRUD
     {
         return $this->authManager?->isAuthenticated() ?? false;
     }
+    
+    public function requestPasswordReset(string $email): array
+    {
+        if (!$this->authManager) {
+            return ['success' => false, 'error' => 'Authentication not enabled'];
+        }
+        
+        return $this->authManager->requestPasswordReset($email);
+    }
+    
+    public function validateResetToken(string $token): ?string
+    {
+        return $this->authManager?->validateResetToken($token);
+    }
+    
+    public function resetPassword(string $token, string $newPassword): array
+    {
+        if (!$this->authManager) {
+            return ['success' => false, 'error' => 'Authentication not enabled'];
+        }
+        
+        return $this->authManager->resetPassword($token, $newPassword);
+    }
 }

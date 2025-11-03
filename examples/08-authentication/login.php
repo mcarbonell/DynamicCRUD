@@ -64,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php echo $crud->renderLoginForm(); ?>
     
     <div class="links">
+        <a href="forgot-password.php">Forgot Password?</a> |
         Don't have an account? <a href="register.php">Register here</a>
     </div>
 </body>

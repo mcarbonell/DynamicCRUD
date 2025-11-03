@@ -216,4 +216,97 @@ class AuthenticationManager
         
         unset($_SESSION['login_attempts']);
     }
+    
+    // Password Reset Methods
+    
+    public function requestPasswordReset(string $email): array
+    {
+        $identifierField = $this->authConfig['identifier_field'] ?? 'email';
+        
+        $sql = "SELECT id FROM {$this->userTable} WHERE {$identifierField} = :email LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['email' => $email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$user) {
+            return ['success' => false, 'error' => 'User not found'];
+        }
+        
+        $this->ensurePasswordResetsTable();
+        
+        $token = bin2hex(random_bytes(32));
+        $expiresAt = date('Y-m-d H:i:s', time() + 3600); // 1 hour
+        
+        $sql = "INSERT INTO password_resets (email, token, expires_at) VALUES (:email, :token, :expires_at)";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'email' => $email,
+            'token' => $token,
+            'expires_at' => $expiresAt
+        ]);
+        
+        return ['success' => true, 'token' => $token];
+    }
+    
+    public function validateResetToken(string $token): ?string
+    {
+        $this->ensurePasswordResetsTable();
+        
+        $sql = "SELECT email, expires_at FROM password_resets WHERE token = :token LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['token' => $token]);
+        $reset = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$reset) {
+            return null;
+        }
+        
+        if (strtotime($reset['expires_at']) < time()) {
+            return null;
+        }
+        
+        return $reset['email'];
+    }
+    
+    public function resetPassword(string $token, string $newPassword): array
+    {
+        $email = $this->validateResetToken($token);
+        
+        if (!$email) {
+            return ['success' => false, 'error' => 'Invalid or expired token'];
+        }
+        
+        $identifierField = $this->authConfig['identifier_field'] ?? 'email';
+        $passwordField = $this->authConfig['password_field'] ?? 'password';
+        
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        
+        $sql = "UPDATE {$this->userTable} SET {$passwordField} = :password WHERE {$identifierField} = :email";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'password' => $hashedPassword,
+            'email' => $email
+        ]);
+        
+        $sql = "DELETE FROM password_resets WHERE token = :token";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['token' => $token]);
+        
+        return ['success' => true];
+    }
+    
+    private function ensurePasswordResetsTable(): void
+    {
+        $sql = "CREATE TABLE IF NOT EXISTS password_resets (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            email VARCHAR(255) NOT NULL,
+            token VARCHAR(255) NOT NULL UNIQUE,
+            expires_at TIMESTAMP NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX (email),
+            INDEX (token)
+        )";
+        
+        $this->pdo->exec($sql);
+    }
 }
