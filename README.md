@@ -54,6 +54,37 @@ composer require dynamiccrud/dynamiccrud
 
 ---
 
+## ✨ What's New in v2.0
+
+**Table Metadata System** - Configure everything via database table comments!
+
+```sql
+CREATE TABLE posts (
+    id INT PRIMARY KEY,
+    title VARCHAR(255),
+    slug VARCHAR(255),
+    created_at TIMESTAMP
+) COMMENT = '{
+    "display_name": "Blog Posts",
+    "icon": "📝",
+    "list_view": {"searchable": ["title"], "per_page": 20},
+    "behaviors": {
+        "timestamps": {"created_at": "created_at"},
+        "sluggable": {"source": "title", "target": "slug"}
+    }
+}';
+```
+
+```php
+$crud = new DynamicCRUD($pdo, 'posts');
+echo $crud->renderList();  // Search, filters, pagination - all automatic!
+$crud->handleSubmission(); // Slug and timestamps - automatic!
+```
+
+👉 [See Table Metadata Guide](docs/TABLE_METADATA.md)
+
+---
+
 ## 🎯 Quick Start
 
 ### 1. Basic CRUD (3 lines of code!)
@@ -235,12 +266,19 @@ $crud->handleSubmission();
 
 ## 📚 Documentation
 
+### v2.0 Features (NEW!)
+- [Table Metadata Guide](docs/TABLE_METADATA.md) - Complete v2.0 guide
+- [Table Metadata Roadmap](docs/TABLE_METADATA_IDEAS.md) - Future features
+
+### Core Features
 - [Template System Guide](docs/TEMPLATES.md) - Blade-like templates
 - [Internationalization (i18n) Guide](docs/I18N.md) - Multi-language support
 - [Hooks System Guide](docs/HOOKS.md) - 10 lifecycle hooks explained
 - [Virtual Fields Guide](docs/VIRTUAL_FIELDS.md) - Password confirmation, terms acceptance
 - [Many-to-Many Relationships](docs/MANY_TO_MANY.md) - M:N setup guide
 - [Customization Guide](docs/CUSTOMIZATION.md) - Metadata options
+
+### Setup & Contributing
 - [Docker Setup](DOCKER_SETUP.md) - MySQL & PostgreSQL with Docker
 - [Changelog](CHANGELOG.md) - Version history
 - [Contributing](CONTRIBUTING.md) - How to contribute
@@ -324,6 +362,17 @@ vendor/bin/phpunit --testdox
 
 ## 🚦 Roadmap
 
+### ✅ Completed (v2.0.0)
+- **Table Metadata System** (Phase 1 - Quick Wins)
+  - UI/UX Customization (list views, colors, icons)
+  - Dynamic Forms (tabs, fieldsets)
+  - Automatic Behaviors (timestamps, sluggable)
+  - Search & Filters (full-text search + filters)
+- ListGenerator class with search/filter rendering
+- TableMetadata class with 20+ methods
+- 4 new examples in 06-table-metadata/
+- Complete documentation (TABLE_METADATA.md)
+
 ### ✅ Completed (v1.0.0)
 - Full CRUD operations (Create, Read, Update, Delete)
 - Foreign key relationships
@@ -372,14 +421,15 @@ vendor/bin/phpunit --testdox
 
 ## 📊 Project Stats
 
-- **16 PHP classes** (~5,000 lines)
-- **11 working examples**
-- **10 technical documents**
+- **19 PHP classes** (~6,500 lines)
+- **15 working examples** (4 new in v2.0)
+- **12 technical documents**
 - **195 automated tests** (76% passing)
 - **Languages supported**: 3 (English, Spanish, French)
 - **Databases supported**: 2 (MySQL, PostgreSQL)
 - **Template engine**: Blade-like syntax
-- **Development time**: < 2 days
+- **Table metadata features**: 4 (UI/UX, Forms, Behaviors, Search)
+- **Development time**: < 3 days
 
 ---
 
