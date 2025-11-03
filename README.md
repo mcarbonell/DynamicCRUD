@@ -61,9 +61,9 @@ composer require dynamiccrud/dynamiccrud
 After installation, initialize your project:
 
 ```bash
-php vendor/bin/dynamiccrud init
-php vendor/bin/dynamiccrud list:tables
-php vendor/bin/dynamiccrud generate:metadata users
+php bin/dynamiccrud init
+php bin/dynamiccrud list:tables
+php bin/dynamiccrud generate:metadata users
 ```
 
 ---
