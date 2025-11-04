@@ -1,4 +1,5 @@
 <?php
+header('Content-Type: text/html; charset=UTF-8');
 require_once __DIR__ . '/../../vendor/autoload.php';
 
 use DynamicCRUD\DynamicCRUD;
@@ -32,7 +33,7 @@ $id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>\ud83c\udfe0 Inmobiliaria - M\u00faltiples Fotos</title>
+    <title>🏠 Inmobiliaria - Múltiples Fotos</title>
     <style>
         body { font-family: system-ui, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }
         .container { max-width: 1200px; margin: 0 auto; }
@@ -64,27 +65,27 @@ $id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 <body>
     <div class="container">
         <div class="header">
-            <h1>\ud83c\udfe0 Inmobiliaria - Gesti\u00f3n de Propiedades</h1>
-            <p>Ejemplo de subida m\u00faltiple de archivos (fotos de propiedades)</p>
+            <h1>🏠 Inmobiliaria - Gestión de Propiedades</h1>
+            <p>Ejemplo de subida múltiple de archivos (fotos de propiedades)</p>
         </div>
 
         <?php if (isset($_GET['success'])): ?>
             <div class="success">
-                \u2705 Propiedad guardada correctamente con todas las fotos!
+                ✅ Propiedad guardada correctamente con todas las fotos!
             </div>
         <?php endif; ?>
 
         <?php if (isset($error)): ?>
             <div class="error">
-                \u274c <?= htmlspecialchars($error) ?>
+                ❌ <?= htmlspecialchars($error) ?>
             </div>
         <?php endif; ?>
 
         <div class="actions">
             <?php if ($id): ?>
-                <a href="?" class="btn btn-secondary">\u2190 Volver al listado</a>
+                <a href="?" class="btn btn-secondary">← Volver al listado</a>
             <?php else: ?>
-                <a href="?id=new" class="btn">\u2795 Nueva Propiedad</a>
+                <a href="?id=new" class="btn">➕ Nueva Propiedad</a>
             <?php endif; ?>
         </div>
 
@@ -108,17 +109,17 @@ $id = isset($_GET['id']) ? (int)$_GET['id'] : null;
                         <img src="<?= htmlspecialchars($firstPhoto) ?>" alt="<?= htmlspecialchars($property['title']) ?>">
                         <div class="content">
                             <h3><?= htmlspecialchars($property['title']) ?></h3>
-                            <div class="price"><?= number_format($property['price'], 0, ',', '.') ?> \u20ac</div>
+                            <div class="price"><?= number_format($property['price'], 0, ',', '.') ?> €</div>
                             <div class="details">
-                                \ud83d\udecf\ufe0f <?= $property['bedrooms'] ?> hab. | 
-                                \ud83d\udebf <?= $property['bathrooms'] ?> ba\u00f1os | 
-                                \ud83d\udccf <?= $property['area'] ?> m\u00b2
+                                🛏️ <?= $property['bedrooms'] ?> hab. | 
+                                🛿 <?= $property['bathrooms'] ?> baños | 
+                                📏 <?= $property['area'] ?> m²
                             </div>
                             <div class="details">
-                                \ud83d\udccd <?= htmlspecialchars($property['city']) ?>
+                                📍 <?= htmlspecialchars($property['city']) ?>
                             </div>
                             <div class="details">
-                                \ud83d\udcf7 <?= count($photos) ?> fotos
+                                📷 <?= count($photos) ?> fotos
                             </div>
                             <span class="status <?= $property['status'] ?>">
                                 <?= $statusLabels[$property['status']] ?>
