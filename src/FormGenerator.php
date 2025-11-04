@@ -17,6 +17,7 @@ class FormGenerator
     private ?Translator $translator = null;
     private ?TemplateEngine $templateEngine = null;
     private $tableMetadata = null;
+    private ?ThemeManager $themeManager = null;
     
     public function __construct(array $schema, array $data = [], string $csrfToken = '', ?PDO $pdo = null, ?CRUDHandler $handler = null)
     {
@@ -44,10 +45,24 @@ class FormGenerator
         $this->tableMetadata = $metadata;
         return $this;
     }
+    
+    public function setThemeManager(ThemeManager $themeManager): self
+    {
+        $this->themeManager = $themeManager;
+        return $this;
+    }
 
     public function render(): string
     {
-        $html = $this->renderStyles() . "\n";
+        $html = '';
+        
+        // Add theme CSS variables if theme manager is set
+        if ($this->themeManager) {
+            $html .= $this->themeManager->renderCSSVariables();
+            $html .= $this->themeManager->renderBranding();
+        }
+        
+        $html .= $this->renderStyles() . "\n";
         $html .= $this->renderAssets() . "\n";
         $enctype = $this->hasFileFields() ? ' enctype="multipart/form-data"' : '';
         $html .= '<form method="POST" class="dynamic-crud-form"' . $enctype . '>' . "\n";
@@ -414,7 +429,7 @@ class FormGenerator
 
     private function renderStyles(): string
     {
-        return '<style>
+        $css = '<style>
         .dynamic-crud-form { max-width: 800px; margin: 20px auto; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; }
@@ -447,7 +462,33 @@ class FormGenerator
         .m2m-option input[type="checkbox"] { margin: 0; }
         .m2m-option label { margin: 0; cursor: pointer; flex: 1; }
         .m2m-stats { margin-top: 10px; font-size: 13px; color: #666; text-align: right; }
+        .multiple-files-container { border: 2px dashed #ddd; border-radius: 8px; padding: 20px; background: #f9f9f9; }
+        .multiple-files-container input[type="file"] { display: none; }
+        .file-drop-zone { text-align: center; padding: 40px 20px; cursor: pointer; color: #666; font-size: 14px; transition: all 0.3s; }
+        .file-drop-zone:hover, .file-drop-zone.drag-over { background: #e8f0fe; border-color: #667eea; color: #667eea; }
+        .file-previews { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 20px; }
+        .file-preview-item { position: relative; border: 1px solid #ddd; border-radius: 4px; padding: 10px; background: white; }
+        .file-preview-item img { width: 100%; height: 120px; object-fit: cover; border-radius: 4px; }
+        .file-preview-item .file-name { font-size: 12px; margin-top: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .file-preview-item .remove-preview { position: absolute; top: 5px; right: 5px; background: #e53e3e; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 16px; line-height: 1; }
+        .existing-files { margin-top: 20px; }
+        .existing-files h4 { margin-bottom: 10px; font-size: 14px; color: #333; }
+        .existing-file { display: flex; align-items: center; gap: 10px; padding: 10px; background: white; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 8px; }
+        .existing-file img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; }
+        .existing-file a { flex: 1; color: #667eea; text-decoration: none; }
+        .existing-file a:hover { text-decoration: underline; }
+        .existing-file .remove-file { background: #e53e3e; color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 18px; line-height: 1; }
+        .app-branding { text-align: center; margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); border-radius: var(--border-radius); color: white; }
+        .app-logo img { max-width: 150px; margin-bottom: 10px; }
+        .app-name { font-size: 24px; font-weight: 700; }
         </style>';
+        
+        // Apply theme if theme manager is set
+        if ($this->themeManager) {
+            $css = $this->themeManager->applyThemeToStyles($css);
+        }
+        
+        return $css;
     }
     
     private function renderAssets(): string
@@ -469,6 +510,101 @@ class FormGenerator
             ];
             $html .= '<script>window.DynamicCRUDTranslations = ' . json_encode($translations) . ';</script>';
         }
+        
+        // Add multiple file upload JavaScript
+        $html .= '<script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelectorAll(".multiple-files-container").forEach(container => {
+                const input = container.querySelector("input[type=file]");
+                const dropZone = container.querySelector(".file-drop-zone");
+                const previews = container.querySelector(".file-previews");
+                const maxFiles = parseInt(input.dataset.maxFiles || 10);
+                let selectedFiles = [];
+                
+                dropZone.addEventListener("click", () => input.click());
+                
+                dropZone.addEventListener("dragover", (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add("drag-over");
+                });
+                
+                dropZone.addEventListener("dragleave", () => {
+                    dropZone.classList.remove("drag-over");
+                });
+                
+                dropZone.addEventListener("drop", (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove("drag-over");
+                    handleFiles(e.dataTransfer.files);
+                });
+                
+                input.addEventListener("change", (e) => {
+                    handleFiles(e.target.files);
+                });
+                
+                function handleFiles(files) {
+                    if (selectedFiles.length + files.length > maxFiles) {
+                        alert("Máximo " + maxFiles + " archivos permitidos");
+                        return;
+                    }
+                    
+                    Array.from(files).forEach(file => {
+                        selectedFiles.push(file);
+                        showPreview(file);
+                    });
+                    
+                    updateFileInput();
+                }
+                
+                function showPreview(file) {
+                    const div = document.createElement("div");
+                    div.className = "file-preview-item";
+                    
+                    if (file.type.startsWith("image/")) {
+                        const img = document.createElement("img");
+                        img.src = URL.createObjectURL(file);
+                        div.appendChild(img);
+                    }
+                    
+                    const name = document.createElement("div");
+                    name.className = "file-name";
+                    name.textContent = file.name;
+                    div.appendChild(name);
+                    
+                    const removeBtn = document.createElement("button");
+                    removeBtn.className = "remove-preview";
+                    removeBtn.textContent = "×";
+                    removeBtn.type = "button";
+                    removeBtn.onclick = () => {
+                        const index = selectedFiles.indexOf(file);
+                        if (index > -1) {
+                            selectedFiles.splice(index, 1);
+                            div.remove();
+                            updateFileInput();
+                        }
+                    };
+                    div.appendChild(removeBtn);
+                    
+                    previews.appendChild(div);
+                }
+                
+                function updateFileInput() {
+                    const dt = new DataTransfer();
+                    selectedFiles.forEach(file => dt.items.add(file));
+                    input.files = dt.files;
+                }
+                
+                // Handle existing file removal
+                container.querySelectorAll(".remove-file").forEach(btn => {
+                    btn.addEventListener("click", function() {
+                        if (confirm("¿Eliminar este archivo?")) {
+                            this.closest(".existing-file").remove();
+                        }
+                    });
+                });
+            });
+        });
+        </script>';
         
         return $html;
     }
@@ -504,11 +640,21 @@ class FormGenerator
 
     private function isFileField(array $column): bool
     {
-        return ($column['metadata']['type'] ?? null) === 'file';
+        $type = $column['metadata']['type'] ?? null;
+        return $type === 'file' || $type === 'multiple_files';
+    }
+
+    private function isMultipleFileField(array $column): bool
+    {
+        return ($column['metadata']['type'] ?? null) === 'multiple_files';
     }
 
     private function renderFileInput(array $column, $value): string
     {
+        if ($this->isMultipleFileField($column)) {
+            return $this->renderMultipleFileInput($column, $value);
+        }
+
         $accept = $column['metadata']['accept'] ?? '';
         $acceptAttr = $accept ? sprintf(' accept="%s"', htmlspecialchars($accept)) : '';
         $requiredAttr = (!$column['is_nullable'] && !$value) ? ' required' : '';
@@ -537,6 +683,48 @@ class FormGenerator
         }
         
         $html .= '<div class="file-preview-new"></div>';
+        
+        return $html;
+    }
+
+    private function renderMultipleFileInput(array $column, $value): string
+    {
+        $accept = $column['metadata']['accept'] ?? '';
+        $maxFiles = $column['metadata']['max_files'] ?? 10;
+        $acceptAttr = $accept ? sprintf(' accept="%s"', htmlspecialchars($accept)) : '';
+        
+        $html = '<div class="multiple-files-container">' . "\n";
+        $html .= sprintf(
+            '  <input type="file" name="%s[]" id="%s" multiple%s data-max-files="%d">',
+            $column['name'],
+            $column['name'],
+            $acceptAttr,
+            $maxFiles
+        ) . "\n";
+        $html .= sprintf('  <div class="file-drop-zone">Arrastra archivos aquí o haz clic para seleccionar (máx. %d)</div>', $maxFiles) . "\n";
+        $html .= '  <div class="file-previews"></div>' . "\n";
+        
+        // Existing files
+        if ($value) {
+            $files = is_string($value) ? json_decode($value, true) : $value;
+            if (is_array($files) && !empty($files)) {
+                $html .= '  <div class="existing-files">' . "\n";
+                $html .= '    <h4>Archivos actuales:</h4>' . "\n";
+                foreach ($files as $index => $file) {
+                    $html .= '    <div class="existing-file">' . "\n";
+                    if ($this->isImage($file)) {
+                        $html .= sprintf('      <img src="%s" alt="File %d">', htmlspecialchars($file), $index + 1) . "\n";
+                    }
+                    $html .= sprintf('      <a href="%s" target="_blank">%s</a>', htmlspecialchars($file), htmlspecialchars(basename($file))) . "\n";
+                    $html .= sprintf('      <button type="button" class="remove-file" data-file="%s">×</button>', htmlspecialchars($file)) . "\n";
+                    $html .= sprintf('      <input type="hidden" name="%s_existing[]" value="%s">', $column['name'], htmlspecialchars($file)) . "\n";
+                    $html .= '    </div>' . "\n";
+                }
+                $html .= '  </div>' . "\n";
+            }
+        }
+        
+        $html .= '</div>';
         
         return $html;
     }

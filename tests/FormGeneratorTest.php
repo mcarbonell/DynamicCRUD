@@ -302,7 +302,9 @@ class FormGeneratorTest extends TestCase
         $generator = new FormGenerator($this->schema, $data);
         $html = $generator->render();
 
-        $this->assertStringNotContainsString('<script>', $html);
-        $this->assertStringContainsString('&lt;script&gt;', $html);
+        // Check that the XSS attempt is escaped in the input value
+        $this->assertStringContainsString('value="&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"', $html);
+        // Ensure the dangerous script is not executable
+        $this->assertStringNotContainsString('value="<script>alert("xss")</script>"', $html);
     }
 }

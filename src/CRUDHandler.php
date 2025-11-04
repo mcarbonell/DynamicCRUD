@@ -110,7 +110,25 @@ class CRUDHandler
         
         // Manejar archivos subidos
         foreach ($this->schema['columns'] as $column) {
-            if (($column['metadata']['type'] ?? null) === 'file') {
+            $fieldType = $column['metadata']['type'] ?? null;
+            
+            if ($fieldType === 'multiple_files') {
+                try {
+                    $uploadedFiles = $this->fileHandler->handleMultipleUploads($column['name'], $column['metadata']);
+                    
+                    // Merge with existing files
+                    $existingFiles = [];
+                    if (isset($_POST[$column['name'] . '_existing']) && is_array($_POST[$column['name'] . '_existing'])) {
+                        $existingFiles = $_POST[$column['name'] . '_existing'];
+                    }
+                    
+                    $allFiles = array_merge($existingFiles, $uploadedFiles);
+                    $data[$column['name']] = !empty($allFiles) ? json_encode($allFiles) : null;
+                    
+                } catch (\Exception $e) {
+                    return ['success' => false, 'error' => $e->getMessage()];
+                }
+            } elseif ($fieldType === 'file') {
                 try {
                     $filePath = $this->fileHandler->handleUpload($column['name'], $column['metadata']);
                     if ($filePath) {

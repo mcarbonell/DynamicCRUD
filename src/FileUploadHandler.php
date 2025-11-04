@@ -66,6 +66,61 @@ class FileUploadHandler
         return '../uploads/' . $filename;
     }
 
+    public function handleMultipleUploads(string $fieldName, array $metadata = []): array
+    {
+        if (!isset($_FILES[$fieldName]) || !is_array($_FILES[$fieldName]['name'])) {
+            return [];
+        }
+
+        $files = $_FILES[$fieldName];
+        $uploadedFiles = [];
+        $maxFiles = $metadata['max_files'] ?? 10;
+        $fileCount = count($files['name']);
+
+        if ($fileCount > $maxFiles) {
+            throw new \Exception("Máximo {$maxFiles} archivos permitidos");
+        }
+
+        for ($i = 0; $i < $fileCount; $i++) {
+            if ($files['error'][$i] === UPLOAD_ERR_NO_FILE) {
+                continue;
+            }
+
+            if ($files['error'][$i] !== UPLOAD_ERR_OK) {
+                throw new \Exception($this->getUploadErrorMessage($files['error'][$i]));
+            }
+
+            $allowedMimes = $metadata['allowed_mimes'] ?? $this->allowedMimes;
+            $maxSize = $metadata['max_size'] ?? $this->maxSize;
+
+            if ($files['size'][$i] > $maxSize) {
+                throw new \Exception("El archivo {$files['name'][$i]} excede el tamaño máximo");
+            }
+
+            if (!empty($allowedMimes)) {
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mimeType = finfo_file($finfo, $files['tmp_name'][$i]);
+                finfo_close($finfo);
+
+                if (!in_array($mimeType, $allowedMimes)) {
+                    throw new \Exception("Tipo de archivo no permitido: {$files['name'][$i]}");
+                }
+            }
+
+            $extension = pathinfo($files['name'][$i], PATHINFO_EXTENSION);
+            $filename = uniqid() . '_' . time() . '_' . $i . '.' . $extension;
+            $destination = $this->uploadDir . '/' . $filename;
+
+            if (!move_uploaded_file($files['tmp_name'][$i], $destination)) {
+                throw new \Exception("Error al mover el archivo {$files['name'][$i]}");
+            }
+
+            $uploadedFiles[] = '../uploads/' . $filename;
+        }
+
+        return $uploadedFiles;
+    }
+
     private function getUploadErrorMessage(int $errorCode): string
     {
         return match($errorCode) {

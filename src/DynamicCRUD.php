@@ -26,6 +26,8 @@ class DynamicCRUD
     private array $schema;
     private PermissionManager $permissionManager;
     private ?AuthenticationManager $authManager = null;
+    private ?ThemeManager $themeManager = null;
+    private bool $globalConfigEnabled = false;
 
     public function __construct(
         PDO $pdo, 
@@ -82,6 +84,9 @@ class DynamicCRUD
         $generator->setTranslator($this->translator);
         if ($this->templateEngine) {
             $generator->setTemplateEngine($this->templateEngine);
+        }
+        if ($this->themeManager) {
+            $generator->setThemeManager($this->themeManager);
         }
         
         return $generator->render();
@@ -428,5 +433,23 @@ class DynamicCRUD
     {
         $importer = new ImportManager($this->pdo, $this->table, $this->schema);
         return $importer->generateTemplate();
+    }
+    
+    public function enableGlobalConfig(): self
+    {
+        $globalConfig = new GlobalMetadata($this->pdo);
+        $this->themeManager = new ThemeManager($globalConfig);
+        $this->globalConfigEnabled = true;
+        return $this;
+    }
+    
+    public function getThemeManager(): ?ThemeManager
+    {
+        return $this->themeManager;
+    }
+    
+    public function isGlobalConfigEnabled(): bool
+    {
+        return $this->globalConfigEnabled;
     }
 }
