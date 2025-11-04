@@ -21,7 +21,7 @@
         </exclude>
     </coverage>
     <php>
-        <env name="DB_HOST" value="localhost"/>
+        <env name="DB_HOST" value="127.0.0.1"/>
         <env name="DB_NAME" value="test"/>
         <env name="DB_USER" value="root"/>
         <env name="DB_PASS" value="rootpassword"/>
