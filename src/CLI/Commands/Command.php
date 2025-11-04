@@ -30,15 +30,21 @@ abstract class Command
     {
         $config = $this->loadConfig();
         $db = $config['database'] ?? $config;
-        
+
+        $driver   = $db['driver']   ?? getenv('DB_DRIVER') ?: 'mysql';
+        $host     = $db['host']     ?? getenv('DB_HOST')   ?: 'localhost';
+        $dbName   = $db['database'] ?? getenv('DB_NAME')   ?: 'test';
+        $user     = $db['username'] ?? getenv('DB_USER')   ?: 'root';
+        $pass     = $db['password'] ?? getenv('DB_PASS')   ?: '';
+
         $dsn = sprintf(
             '%s:host=%s;dbname=%s',
-            $db['driver'] ?? 'mysql',
-            $db['host'] ?? 'localhost',
-            $db['database'] ?? 'test'
+            $driver,
+            $host,
+            $dbName
         );
-        
-        $pdo = new \PDO($dsn, $db['username'] ?? 'root', $db['password'] ?? '');
+
+        $pdo = new \PDO($dsn, $user, $pass);
         $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         
         return $pdo;
@@ -49,7 +55,7 @@ abstract class Command
         $configFile = getcwd() . '/dynamiccrud.json';
         
         if (!file_exists($configFile)) {
-            throw new \Exception('Configuration file not found. Run: php dynamiccrud init');
+            return [];
         }
         
         $config = json_decode(file_get_contents($configFile), true);

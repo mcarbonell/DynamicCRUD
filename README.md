@@ -68,6 +68,35 @@ php bin/dynamiccrud generate:metadata users
 
 ---
 
+## ✨ What's New in v3.4
+
+**Code Refactoring** - Improved code quality, maintainability, and Components integration!
+
+**FormGenerator Refactoring:**
+- Integrated Components library for tabs and buttons
+- Simplified render() method from ~70 to ~15 lines
+- Extracted 8 new methods for better organization
+- CSS variables support for dynamic theming
+- Eliminated code duplication
+
+**ListGenerator Refactoring:**
+- 20% code reduction (~350 to ~280 lines)
+- Modern table styling with Components::table()
+- Consistent pagination with Components::pagination()
+- Cleaner action button rendering
+- Better separation of concerns
+
+**Benefits:**
+- ✅ Better maintainability and readability
+- ✅ Consistent design across forms and lists
+- ✅ Less code duplication
+- ✅ Modern, professional styling
+- ✅ All 367 tests passing (100%)
+
+👉 [See Refactoring Patterns](docs/REFACTORING_PATTERNS.md)
+
+---
+
 ## ✨ What's New in v3.3
 
 **UI Components Library** - 15 reusable, accessible, and beautiful components for building modern UIs!

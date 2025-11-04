@@ -3,6 +3,7 @@
 namespace DynamicCRUD\Tests\Export;
 
 use DynamicCRUD\DynamicCRUD;
+use DynamicCRUD\Tests\TestHelper;
 use PHPUnit\Framework\TestCase;
 use PDO;
 
