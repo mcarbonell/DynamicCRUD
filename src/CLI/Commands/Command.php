@@ -29,15 +29,16 @@ abstract class Command
     protected function getPDO(): \PDO
     {
         $config = $this->loadConfig();
+        $db = $config['database'] ?? [];
         
         $dsn = sprintf(
             '%s:host=%s;dbname=%s',
-            $config['driver'] ?? 'mysql',
-            $config['host'] ?? 'localhost',
-            $config['database'] ?? 'test'
+            $db['driver'] ?? 'mysql',
+            $db['host'] ?? 'localhost',
+            $db['database'] ?? 'test'
         );
         
-        $pdo = new \PDO($dsn, $config['username'] ?? 'root', $config['password'] ?? '');
+        $pdo = new \PDO($dsn, $db['username'] ?? 'root', $db['password'] ?? '');
         $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         
         return $pdo;
