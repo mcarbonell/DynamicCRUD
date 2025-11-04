@@ -68,6 +68,48 @@ php bin/dynamiccrud generate:metadata users
 
 ---
 
+## ✨ What's New in v3.2
+
+**Workflow Engine** - State management with transitions, permissions, and history tracking!
+
+```php
+$crud = new DynamicCRUD($pdo, 'orders');
+
+$crud->enableWorkflow([
+    'field' => 'status',
+    'states' => ['pending', 'processing', 'shipped', 'delivered'],
+    'transitions' => [
+        'process' => [
+            'from' => 'pending',
+            'to' => 'processing',
+            'label' => 'Process Order',
+            'permissions' => ['admin', 'manager']
+        ],
+        'ship' => [
+            'from' => 'processing',
+            'to' => 'shipped',
+            'permissions' => ['admin', 'warehouse']
+        ]
+    ],
+    'history' => true
+]);
+
+echo $crud->renderForm($id); // Automatic transition buttons!
+```
+
+**Features:**
+- 🔄 **State Management** - Define allowed states for records
+- ➡️ **Transitions** - Configure transitions between states
+- 🔐 **Permission Control** - Restrict transitions by user role
+- 🎨 **Automatic UI** - Transition buttons rendered automatically
+- 📜 **History Tracking** - Complete audit trail of all transitions
+- 🪝 **Lifecycle Hooks** - Execute custom logic before/after transitions
+- 🏷️ **State Labels** - Custom labels and colors for each state
+
+👉 [See Workflow Example](examples/19-workflow/)
+
+---
+
 ## ✨ What's New in v3.1
 
 **Admin Panel Generator** - Complete admin panel with navigation, dashboard, and integrated CRUD!
@@ -915,7 +957,21 @@ php vendor/phpunit/phpunit/phpunit tests/SoftDeletesTest.php
 - 1 new example (complete admin panel)
 - 12 new tests (100% passing)
 
-### 🔮 Planned (v3.2+)
+### ✅ Completed (v3.2.0)
+- **Workflow Engine**
+  - State management with configurable states
+  - Transitions with from/to state validation
+  - Permission-based transition control
+  - Automatic transition buttons in forms
+  - Complete history tracking with audit trail
+  - Lifecycle hooks (before/after transitions)
+  - State labels with custom colors
+  - Multiple from states support
+- WorkflowEngine class
+- 1 new example (order management workflow)
+- 13 new tests (100% passing)
+
+### 🔮 Planned (v3.3+)
 - [ ] GraphQL support
 - [ ] OAuth/LDAP authentication
 - [ ] Email verification
@@ -926,10 +982,10 @@ php vendor/phpunit/phpunit/phpunit tests/SoftDeletesTest.php
 
 ## 📊 Project Stats
 
-- **37 PHP classes** (~13,000 lines)
-- **36 working examples** (1 in v3.1, 1 in v3.0, 2 in v2.9, 1 in v2.8, 1 in v2.7, 2 in v2.5, 2 in v2.3, 4 in v2.2, 6 in v2.1, 4 in v2.0)
+- **38 PHP classes** (~13,500 lines)
+- **37 working examples** (1 in v3.2, 1 in v3.1, 1 in v3.0, 2 in v2.9, 1 in v2.8, 1 in v2.7, 2 in v2.5, 2 in v2.3, 4 in v2.2, 6 in v2.1, 4 in v2.0)
 - **21 technical documents**
-- **328 automated tests** (100% passing, 90% coverage)
+- **341 automated tests** (100% passing, 90% coverage)
 - **19 CLI commands**
 - **Languages supported**: 3 (English, Spanish, French)
 - **Databases supported**: 2 (MySQL, PostgreSQL)

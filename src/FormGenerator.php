@@ -101,6 +101,23 @@ class FormGenerator
         $html .= sprintf('<button type="submit">%s</button>', htmlspecialchars($submitLabel)) . "\n";
         $html .= '</form>' . "\n";
         
+        // Renderizar botones de workflow si está habilitado
+        if ($this->handler && $this->handler->getWorkflowEngine()) {
+            $pk = $this->schema['primary_key'];
+            $recordId = $this->data[$pk] ?? null;
+            if ($recordId) {
+                $user = null;
+                if ($this->handler->getPermissionManager()) {
+                    $userId = $this->handler->getPermissionManager()->getCurrentUserId();
+                    $role = $this->handler->getPermissionManager()->getCurrentRole();
+                    if ($userId) {
+                        $user = ['id' => $userId, 'role' => $role];
+                    }
+                }
+                $html .= $this->handler->getWorkflowEngine()->renderTransitionButtons($recordId, $user) . "\n";
+            }
+        }
+        
         return $html;
     }
     

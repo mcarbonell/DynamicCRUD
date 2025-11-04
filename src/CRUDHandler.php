@@ -6,6 +6,7 @@ use PDO;
 use DynamicCRUD\Cache\CacheStrategy;
 use DynamicCRUD\I18n\Translator;
 use DynamicCRUD\Security\PermissionManager;
+use DynamicCRUD\Workflow\WorkflowEngine;
 
 class CRUDHandler
 {
@@ -23,6 +24,7 @@ class CRUDHandler
     private $tableMetadata = null;
     private ?PermissionManager $permissionManager = null;
     private ?NotificationManager $notificationManager = null;
+    private ?WorkflowEngine $workflowEngine = null;
 
     public function __construct(PDO $pdo, string $table, ?CacheStrategy $cache = null, ?string $uploadDir = null)
     {
@@ -61,6 +63,28 @@ class CRUDHandler
 
     public function handleSubmission(): array
     {
+        // Handle workflow transitions
+        if (isset($_POST['workflow_transition']) && isset($_POST['workflow_id'])) {
+            if (!$this->workflowEngine) {
+                return ['success' => false, 'error' => 'Workflow not enabled'];
+            }
+            
+            $user = null;
+            if ($this->permissionManager) {
+                $userId = $this->permissionManager->getCurrentUserId();
+                $role = $this->permissionManager->getCurrentRole();
+                if ($userId) {
+                    $user = ['id' => $userId, 'role' => $role];
+                }
+            }
+            
+            return $this->workflowEngine->transition(
+                (int)$_POST['workflow_id'],
+                $_POST['workflow_transition'],
+                $user
+            );
+        }
+        
         $csrfToken = $_POST['csrf_token'] ?? '';
         
         if (!$this->security->validateCsrfToken($csrfToken)) {
@@ -774,5 +798,16 @@ class CRUDHandler
     public function getPermissionManager(): ?PermissionManager
     {
         return $this->permissionManager;
+    }
+    
+    public function setWorkflowEngine(WorkflowEngine $workflowEngine): self
+    {
+        $this->workflowEngine = $workflowEngine;
+        return $this;
+    }
+    
+    public function getWorkflowEngine(): ?WorkflowEngine
+    {
+        return $this->workflowEngine;
     }
 }

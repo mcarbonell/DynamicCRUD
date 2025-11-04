@@ -10,6 +10,7 @@ use DynamicCRUD\Security\PermissionManager;
 use DynamicCRUD\Security\AuthenticationManager;
 use DynamicCRUD\Export\ExportManager;
 use DynamicCRUD\Export\ImportManager;
+use DynamicCRUD\Workflow\WorkflowEngine;
 use PDO;
 
 class DynamicCRUD
@@ -28,6 +29,7 @@ class DynamicCRUD
     private ?AuthenticationManager $authManager = null;
     private ?ThemeManager $themeManager = null;
     private bool $globalConfigEnabled = false;
+    private ?WorkflowEngine $workflowEngine = null;
 
     public function __construct(
         PDO $pdo, 
@@ -451,5 +453,31 @@ class DynamicCRUD
     public function isGlobalConfigEnabled(): bool
     {
         return $this->globalConfigEnabled;
+    }
+    
+    public function enableWorkflow(array $config): self
+    {
+        $this->workflowEngine = new WorkflowEngine($this->pdo, $this->table, $config);
+        $this->handler->setWorkflowEngine($this->workflowEngine);
+        return $this;
+    }
+    
+    public function getWorkflowEngine(): ?WorkflowEngine
+    {
+        return $this->workflowEngine;
+    }
+    
+    public function transition(int $id, string $transition, ?array $user = null): array
+    {
+        if (!$this->workflowEngine) {
+            return ['success' => false, 'error' => 'Workflow not enabled'];
+        }
+        
+        return $this->workflowEngine->transition($id, $transition, $user);
+    }
+    
+    public function getWorkflowHistory(int $recordId): array
+    {
+        return $this->workflowEngine?->getHistory($recordId) ?? [];
     }
 }
