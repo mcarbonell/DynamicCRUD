@@ -7,6 +7,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.7.0] - 2025-01-XX
+
+### 🎉 SQL Dump & Import Release
+
+Export and import table structure and data with metadata preserved.
+
+### ✨ Added
+
+#### SQL Dump Features
+- **DumpSQLCommand** class for SQL export
+- **Full SQL dump** - Structure + data + metadata
+- **Structure only** - Table definition with comments (--structure-only)
+- **Data only** - INSERT statements (--data-only)
+- **Metadata preservation** - Table and column comments included
+- **Output to file** or console
+
+#### SQL Import Features
+- **ImportSQLCommand** class for SQL import
+- **Safe import** - Confirmation prompt before execution
+- **Force mode** - Skip confirmation with --force flag
+- **Transaction support** - DML statements in transactions
+- **DDL handling** - CREATE/DROP/ALTER outside transactions
+- **Error handling** - Rollback on failure
+
+#### CLI Commands
+- **dump:sql** - Export table structure and data to SQL
+- **import:sql** - Import SQL dump file
+
+#### Examples
+- `examples/13-sql-dump/README.md` - Complete SQL dump/import guide
+
+#### Testing
+- **DumpSQLCommandTest** - 3 tests (100% passing)
+  - Full dump test
+  - Structure only test
+  - Data only test
+- **ImportSQLCommandTest** - 1 test (100% passing)
+  - Import with force test
+- All existing tests passing (289/289)
+
+### 🔧 Changed
+- CLI Application registers 15 commands (2 new)
+- Enhanced help menu with SQL dump/import commands
+
+### 📊 Statistics
+- **2 new classes** (DumpSQLCommand, ImportSQLCommand)
+- **2 new CLI commands**
+- **1 new example directory** (13-sql-dump/)
+- **4 new tests** (100% passing)
+- **289 total tests** (100% passing, 90% coverage)
+- **15 total CLI commands**
+
+---
+
 ## [2.6.0] - 2025-01-XX
 
 ### 🎉 Consolidation Release

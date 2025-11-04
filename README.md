@@ -68,6 +68,29 @@ php bin/dynamiccrud generate:metadata users
 
 ---
 
+## ✨ What's New in v2.7
+
+**SQL Dump & Import** - Export and import table structure and data with metadata preserved!
+
+```bash
+# Export SQL dump (structure + data + metadata)
+php bin/dynamiccrud dump:sql users --output=users.sql
+
+# Structure only
+php bin/dynamiccrud dump:sql users --output=structure.sql --structure-only
+
+# Data only
+php bin/dynamiccrud dump:sql users --output=data.sql --data-only
+
+# Import SQL dump
+php bin/dynamiccrud import:sql backup.sql
+php bin/dynamiccrud import:sql backup.sql --force  # Skip confirmation
+```
+
+👉 [See SQL Dump Examples](examples/13-sql-dump/)
+
+---
+
 ## ✨ What's New in v2.6
 
 **Consolidation Release** - Improved documentation and developer experience!
@@ -481,8 +504,11 @@ $crud->handleSubmission();
 ### v2.5 Features
 - Export/Import - CSV export and import with validation
 
+### v2.7 Features
+- SQL Dump & Import - Export/import with metadata preservation
+
 ### v2.4 Features
-- [CLI Tool Guide](docs/CLI.md) - Enhanced CLI with 13 commands
+- [CLI Tool Guide](docs/CLI.md) - Enhanced CLI with 15 commands
 
 ### v2.3 Features
 - [Notifications & Webhooks Guide](docs/NOTIFICATIONS.md) - Email notifications & webhooks
@@ -578,8 +604,8 @@ COMMENT '{"type": "email", "label": "Email", "tooltip": "Required field", "minle
 
 DynamicCRUD has comprehensive test coverage:
 
-- **243 tests** with **450+ assertions**
-- **100% passing rate** (243 passing, 0 failing)
+- **289 tests** with **563+ assertions**
+- **100% passing rate** (289 passing, 0 failing)
 - **90% code coverage**
 - Automated CI/CD with GitHub Actions
 - Tests run on PHP 8.0, 8.1, 8.2, 8.3
@@ -700,11 +726,11 @@ php vendor/phpunit/phpunit/phpunit tests/SoftDeletesTest.php
 
 ## 📊 Project Stats
 
-- **31 PHP classes** (~10,500 lines)
-- **30 working examples** (2 in v2.5, 2 in v2.3, 4 in v2.2, 6 in v2.1, 4 in v2.0)
+- **33 PHP classes** (~11,000 lines)
+- **31 working examples** (1 in v2.7, 2 in v2.5, 2 in v2.3, 4 in v2.2, 6 in v2.1, 4 in v2.0)
 - **19 technical documents** (3 new in v2.6)
-- **285 automated tests** (100% passing, 90% coverage)
-- **13 CLI commands**
+- **289 automated tests** (100% passing, 90% coverage)
+- **15 CLI commands**
 - **Languages supported**: 3 (English, Spanish, French)
 - **Databases supported**: 2 (MySQL, PostgreSQL)
 - **Template engine**: Blade-like syntax

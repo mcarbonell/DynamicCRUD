@@ -14,7 +14,7 @@ The CLI tool is automatically available after installing DynamicCRUD via Compose
 composer require dynamiccrud/dynamiccrud
 ```
 
-The `dynamiccrud` command will be available in `vendor/bin/`:
+The `dynamiccrud` command will be available in `bin/`:
 
 ```bash
 php vendor/bin/dynamiccrud --help

@@ -27,6 +27,8 @@ class Application
             'export:csv' => new Commands\ExportCSVCommand(),
             'import:csv' => new Commands\ImportCSVCommand(),
             'generate:template' => new Commands\GenerateTemplateCommand(),
+            'dump:sql' => new Commands\DumpSQLCommand(),
+            'import:sql' => new Commands\ImportSQLCommand(),
         ];
     }
     
@@ -79,7 +81,9 @@ class Application
         echo "Export/Import Commands:\n";
         echo "  export:csv             Export table data to CSV\n";
         echo "  import:csv             Import data from CSV file\n";
-        echo "  generate:template      Generate CSV import template\n\n";
+        echo "  generate:template      Generate CSV import template\n";
+        echo "  dump:sql               Export table structure and data to SQL\n";
+        echo "  import:sql             Import SQL dump file\n\n";
         echo "Examples:\n";
         echo "  php dynamiccrud init\n";
         echo "  php dynamiccrud list:tables\n";
@@ -92,6 +96,8 @@ class Application
         echo "  php dynamiccrud export:csv users --output=users.csv\n";
         echo "  php dynamiccrud import:csv users data.csv --preview\n";
         echo "  php dynamiccrud generate:template users --output=template.csv\n";
+        echo "  php dynamiccrud dump:sql users --output=users.sql\n";
+        echo "  php dynamiccrud import:sql backup.sql --force\n";
         echo "  php dynamiccrud clear:cache\n\n";
     }
     
