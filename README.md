@@ -832,6 +832,7 @@ $crud->handleSubmission();
 - [Virtual Fields Guide](docs/VIRTUAL_FIELDS.md) - Password confirmation, terms acceptance
 - [Many-to-Many Relationships](docs/MANY_TO_MANY.md) - M:N setup guide
 - [Customization Guide](docs/CUSTOMIZATION.md) - Metadata options
+- [Performance & Memory Guide](docs/PERFORMANCE.md) - Optimization best practices
 
 ### Getting Started
 - [Quick Start Guide](docs/QUICKSTART.md) - Get started in 5 minutes
