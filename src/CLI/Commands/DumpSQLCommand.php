@@ -6,7 +6,6 @@ class DumpSQLCommand extends Command
 {
     public function execute(array $args): void
     {
-        var_dump($args);
         if (empty($args[0])) {
             echo "❌ Error: Table name required\n";
             echo "Usage: php dynamiccrud dump:sql <table> [--output=file.sql] [--data-only] [--structure-only]\n";

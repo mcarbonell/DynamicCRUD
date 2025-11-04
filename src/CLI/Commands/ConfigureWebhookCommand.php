@@ -62,7 +62,7 @@ class ConfigureWebhookCommand extends Command
         echo "  URL: $url\n";
     }
 
-    private function getOption(array $args, string $name, string $default): string
+    protected function getOption(array $args, string $name, string $default): string
     {
         foreach ($args as $arg) {
             if (strpos($arg, $name . '=') === 0) {
