@@ -82,6 +82,21 @@ jobs:
     - name: Create uploads directory
       run: mkdir -p examples/uploads && chmod 777 examples/uploads
     
+    - name: Create CLI config for tests
+      run: |
+        cat > dynamiccrud.json << EOF
+        {
+          "database": {
+            "driver": "mysql",
+            "host": "127.0.0.1",
+            "port": 3306,
+            "database": "test",
+            "username": "root",
+            "password": "rootpassword"
+          }
+        }
+        EOF
+    
     - name: Run test suite
       run: vendor/bin/phpunit --testdox --stop-on-failure
       env:
