@@ -16,7 +16,7 @@ class ConfigureWebhookCommand extends Command
 
         $table = $args[0];
         $url = $args[1];
-        $event = $this->getOption($args, '--event', 'on_create');
+        $event = $this->getOption($args, '--event') ?? 'on_create';
 
         if (!filter_var($url, FILTER_VALIDATE_URL)) {
             $this->error('Invalid URL format');
@@ -62,13 +62,5 @@ class ConfigureWebhookCommand extends Command
         echo "  URL: $url\n";
     }
 
-    protected function getOption(array $args, string $name, string $default): string
-    {
-        foreach ($args as $arg) {
-            if (strpos($arg, $name . '=') === 0) {
-                return substr($arg, strlen($name) + 1);
-            }
-        }
-        return $default;
-    }
+
 }
