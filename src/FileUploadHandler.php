@@ -31,8 +31,11 @@ class FileUploadHandler
             return null;
         }
 
-        $file = $_FILES[$fieldName];
+        return $this->processFile($_FILES[$fieldName], $metadata);
+    }
 
+    public function processFile(array $file, array $metadata = []): string
+    {
         if ($file['error'] !== UPLOAD_ERR_OK) {
             throw new \Exception($this->getUploadErrorMessage($file['error']));
         }
@@ -55,15 +58,24 @@ class FileUploadHandler
         }
 
         $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $filename = uniqid() . '_' . time() . '.' . $extension;
+        $filename = $this->generateUniqueFilename($extension);
         $destination = $this->uploadDir . '/' . $filename;
 
-        if (!move_uploaded_file($file['tmp_name'], $destination)) {
+        if (!$this->moveFile($file['tmp_name'], $destination)) {
             throw new \Exception("Error al mover el archivo subido");
         }
 
-        // Return web-accessible path (relative to examples/)
         return '../uploads/' . $filename;
+    }
+
+    public function generateUniqueFilename(string $extension): string
+    {
+        return uniqid() . '_' . time() . '.' . $extension;
+    }
+
+    protected function moveFile(string $source, string $destination): bool
+    {
+        return move_uploaded_file($source, $destination);
     }
 
     public function handleMultipleUploads(string $fieldName, array $metadata = []): array
@@ -86,36 +98,15 @@ class FileUploadHandler
                 continue;
             }
 
-            if ($files['error'][$i] !== UPLOAD_ERR_OK) {
-                throw new \Exception($this->getUploadErrorMessage($files['error'][$i]));
-            }
+            $file = [
+                'name' => $files['name'][$i],
+                'type' => $files['type'][$i],
+                'tmp_name' => $files['tmp_name'][$i],
+                'error' => $files['error'][$i],
+                'size' => $files['size'][$i],
+            ];
 
-            $allowedMimes = $metadata['allowed_mimes'] ?? $this->allowedMimes;
-            $maxSize = $metadata['max_size'] ?? $this->maxSize;
-
-            if ($files['size'][$i] > $maxSize) {
-                throw new \Exception("El archivo {$files['name'][$i]} excede el tamaño máximo");
-            }
-
-            if (!empty($allowedMimes)) {
-                $finfo = finfo_open(FILEINFO_MIME_TYPE);
-                $mimeType = finfo_file($finfo, $files['tmp_name'][$i]);
-                finfo_close($finfo);
-
-                if (!in_array($mimeType, $allowedMimes)) {
-                    throw new \Exception("Tipo de archivo no permitido: {$files['name'][$i]}");
-                }
-            }
-
-            $extension = pathinfo($files['name'][$i], PATHINFO_EXTENSION);
-            $filename = uniqid() . '_' . time() . '_' . $i . '.' . $extension;
-            $destination = $this->uploadDir . '/' . $filename;
-
-            if (!move_uploaded_file($files['tmp_name'][$i], $destination)) {
-                throw new \Exception("Error al mover el archivo {$files['name'][$i]}");
-            }
-
-            $uploadedFiles[] = '../uploads/' . $filename;
+            $uploadedFiles[] = $this->processFile($file, $metadata);
         }
 
         return $uploadedFiles;

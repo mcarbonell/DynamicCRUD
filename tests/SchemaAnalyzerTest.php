@@ -93,9 +93,30 @@ class SchemaAnalyzerTest extends TestCase
         }
     }
 
-    public function testEnumValuesExtraction(): void
+    public function testEnumValuesExtraction()
     {
-        $this->markTestSkipped('TEMPORARY tables not visible to INFORMATION_SCHEMA in some MySQL configurations');
+        $tableName = 'test_schema_enum_table';
+        try {
+            $this->pdo->exec("CREATE TABLE {$tableName} (id INT, status ENUM('pending', 'completed'))");
+
+            $schema = $this->analyzer->getTableSchema($tableName);
+
+            $statusColumn = null;
+            foreach ($schema['columns'] as $column) {
+                if ($column['name'] === 'status') {
+                    $statusColumn = $column;
+                    break;
+                }
+            }
+
+            $this->assertNotNull($statusColumn);
+            $this->assertEquals('enum', $statusColumn['sql_type']);
+            $this->assertIsArray($statusColumn['enum_values']);
+            $this->assertEquals(['pending', 'completed'], $statusColumn['enum_values']);
+
+        } finally {
+            $this->pdo->exec("DROP TABLE IF EXISTS {$tableName}");
+        }
     }
 
     public function testCacheIntegration(): void

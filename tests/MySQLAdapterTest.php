@@ -79,22 +79,27 @@ class MySQLAdapterTest extends TestCase
 
     public function testEnumValuesExtraction()
     {
-        $schema = $this->adapter->getTableSchema('users');
-        
-        // Buscar columna ENUM si existe
-        $hasEnum = false;
-        foreach ($schema['columns'] as $column) {
-            if ($column['sql_type'] === 'enum' && !empty($column['enum_values'])) {
-                $hasEnum = true;
-                $this->assertIsArray($column['enum_values']);
-                $this->assertNotEmpty($column['enum_values']);
-                break;
+        $tableName = 'test_enum_table';
+        try {
+            $this->pdo->exec("CREATE TABLE {$tableName} (id INT, status ENUM('active', 'inactive'))");
+
+            $schema = $this->adapter->getTableSchema($tableName);
+
+            $statusColumn = null;
+            foreach ($schema['columns'] as $column) {
+                if ($column['name'] === 'status') {
+                    $statusColumn = $column;
+                    break;
+                }
             }
-        }
-        
-        // Si no hay ENUM, marcar como skipped
-        if (!$hasEnum) {
-            $this->markTestSkipped('No ENUM columns in users table');
+
+            $this->assertNotNull($statusColumn);
+            $this->assertEquals('enum', $statusColumn['sql_type']);
+            $this->assertIsArray($statusColumn['enum_values']);
+            $this->assertEquals(['active', 'inactive'], $statusColumn['enum_values']);
+
+        } finally {
+            $this->pdo->exec("DROP TABLE IF EXISTS {$tableName}");
         }
     }
 
