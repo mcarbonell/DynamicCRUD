@@ -8,6 +8,8 @@ use DynamicCRUD\Template\TemplateEngine;
 use DynamicCRUD\Metadata\TableMetadata;
 use DynamicCRUD\Security\PermissionManager;
 use DynamicCRUD\Security\AuthenticationManager;
+use DynamicCRUD\Export\ExportManager;
+use DynamicCRUD\Export\ImportManager;
 use PDO;
 
 class DynamicCRUD
@@ -397,5 +399,34 @@ class DynamicCRUD
         }
         
         return $this->authManager->resetPassword($token, $newPassword);
+    }
+    
+    public function export(string $format = 'csv', array $options = []): string
+    {
+        $exporter = new ExportManager($this->pdo, $this->table, $this->schema);
+        
+        if ($format === 'csv') {
+            return $exporter->toCSV($options);
+        }
+        
+        throw new \InvalidArgumentException("Unsupported format: $format");
+    }
+    
+    public function downloadExport(string $filename, array $options = []): void
+    {
+        $exporter = new ExportManager($this->pdo, $this->table, $this->schema);
+        $exporter->downloadCSV($filename, $options);
+    }
+    
+    public function import(string $csvContent, array $options = []): array
+    {
+        $importer = new ImportManager($this->pdo, $this->table, $this->schema);
+        return $importer->fromCSV($csvContent, $options);
+    }
+    
+    public function generateImportTemplate(): string
+    {
+        $importer = new ImportManager($this->pdo, $this->table, $this->schema);
+        return $importer->generateTemplate();
     }
 }

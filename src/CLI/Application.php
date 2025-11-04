@@ -24,6 +24,9 @@ class Application
             'metadata:export' => new Commands\ExportMetadataCommand(),
             'metadata:import' => new Commands\ImportMetadataCommand(),
             'test:connection' => new Commands\TestConnectionCommand(),
+            'export:csv' => new Commands\ExportCSVCommand(),
+            'import:csv' => new Commands\ImportCSVCommand(),
+            'generate:template' => new Commands\GenerateTemplateCommand(),
         ];
     }
     
@@ -73,6 +76,10 @@ class Application
         echo "Webhook Commands:\n";
         echo "  webhook:configure      Configure webhook for a table\n";
         echo "  test:webhook           Test webhook connectivity\n\n";
+        echo "Export/Import Commands:\n";
+        echo "  export:csv             Export table data to CSV\n";
+        echo "  import:csv             Import data from CSV file\n";
+        echo "  generate:template      Generate CSV import template\n\n";
         echo "Examples:\n";
         echo "  php dynamiccrud init\n";
         echo "  php dynamiccrud list:tables\n";
@@ -82,6 +89,9 @@ class Application
         echo "  php dynamiccrud metadata:import users.json\n";
         echo "  php dynamiccrud webhook:configure users https://webhook.site/abc123\n";
         echo "  php dynamiccrud test:webhook users\n";
+        echo "  php dynamiccrud export:csv users --output=users.csv\n";
+        echo "  php dynamiccrud import:csv users data.csv --preview\n";
+        echo "  php dynamiccrud generate:template users --output=template.csv\n";
         echo "  php dynamiccrud clear:cache\n\n";
     }
     

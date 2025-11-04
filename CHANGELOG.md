@@ -7,6 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.5.0] - 2025-01-XX
+
+### 🎉 Export/Import Release
+
+CSV export and import functionality with validation, preview, and error handling.
+
+### ✨ Added
+
+#### Export Features
+- **ExportManager** class for data export
+- **CSV export** with customizable columns and filters
+- **Download export** with proper headers
+- **Export to string** for programmatic use
+- WHERE clause support for filtered exports
+- ORDER BY and LIMIT support
+
+#### Import Features
+- **ImportManager** class for data import
+- **CSV import** with automatic validation
+- **Preview mode** - see what will be imported without committing
+- **Skip errors mode** - continue importing on validation errors
+- **Row-by-row validation** with detailed error messages
+- **Template generation** - create CSV templates from table schema
+
+#### CLI Commands
+- **export:csv** - Export table data to CSV file
+- **import:csv** - Import data from CSV with preview and error handling
+- **generate:template** - Generate CSV import template
+
+#### Web Examples
+- `examples/12-export-import/export.php` - Export interface with download
+- `examples/12-export-import/import.php` - Import interface with preview
+
+#### Testing
+- **ExportImportTest** - 5 tests (100% passing)
+- All existing tests passing (285/285)
+
+### 🔧 Changed
+- DynamicCRUD class now includes export(), import(), downloadExport(), generateImportTemplate() methods
+- CLI Application registers 13 commands (3 new)
+- PHP 8.4 compatibility - fixed fputcsv/str_getcsv deprecation warnings
+
+### 📊 Statistics
+- **2 new classes** (ExportManager, ImportManager)
+- **3 new CLI commands**
+- **2 new examples** in 12-export-import/
+- **5 new tests** (100% passing)
+- **285 total tests** (100% passing, 90% coverage)
+- **13 total CLI commands**
+
+---
+
 ## [2.4.0] - 2025-01-XX
 
 ### 🎉 CLI Enhancements Release

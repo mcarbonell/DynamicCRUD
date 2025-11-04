@@ -68,6 +68,33 @@ php bin/dynamiccrud generate:metadata users
 
 ---
 
+## ✨ What's New in v2.5
+
+**Export/Import** - CSV export and import with validation and preview!
+
+```php
+// Export to CSV
+$csv = $crud->export('csv');
+$crud->downloadExport('users.csv');
+
+// Import from CSV with preview
+$result = $crud->import($csvContent, ['preview' => true]);
+
+// Generate import template
+$template = $crud->generateImportTemplate();
+```
+
+```bash
+# CLI commands
+php bin/dynamiccrud export:csv users --output=users.csv
+php bin/dynamiccrud import:csv users data.csv --preview
+php bin/dynamiccrud generate:template users --output=template.csv
+```
+
+👉 [See Export/Import Examples](examples/12-export-import/)
+
+---
+
 ## ✨ What's New in v2.4
 
 **CLI Enhancements** - Powerful new commands for webhook management and metadata operations!
@@ -428,8 +455,11 @@ $crud->handleSubmission();
 
 ## 📚 Documentation
 
-### v2.4 Features (NEW!)
-- [CLI Tool Guide](docs/CLI.md) - Enhanced CLI with 10 commands
+### v2.5 Features (NEW!)
+- Export/Import - CSV export and import with validation
+
+### v2.4 Features
+- [CLI Tool Guide](docs/CLI.md) - Enhanced CLI with 13 commands
 
 ### v2.3 Features
 - [Notifications & Webhooks Guide](docs/NOTIFICATIONS.md) - Email notifications & webhooks
@@ -642,11 +672,11 @@ php vendor/phpunit/phpunit/phpunit tests/SoftDeletesTest.php
 
 ## 📊 Project Stats
 
-- **29 PHP classes** (~10,000 lines)
-- **28 working examples** (2 in v2.3, 4 in v2.2, 6 in v2.1, 4 in v2.0)
+- **31 PHP classes** (~10,500 lines)
+- **30 working examples** (2 in v2.5, 2 in v2.3, 4 in v2.2, 6 in v2.1, 4 in v2.0)
 - **16 technical documents**
-- **280 automated tests** (100% passing, 90% coverage)
-- **10 CLI commands** (5 new in v2.4)
+- **285 automated tests** (100% passing, 90% coverage)
+- **13 CLI commands** (3 new in v2.5)
 - **Languages supported**: 3 (English, Spanish, French)
 - **Databases supported**: 2 (MySQL, PostgreSQL)
 - **Template engine**: Blade-like syntax
