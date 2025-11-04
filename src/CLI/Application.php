@@ -33,6 +33,8 @@ class Application
             'config:set' => new Commands\ConfigSetCommand(),
             'config:list' => new Commands\ConfigListCommand(),
             'config:delete' => new Commands\ConfigDeleteCommand(),
+            'branding:set' => new Commands\BrandingSetCommand(),
+            'branding:show' => new Commands\BrandingShowCommand(),
         ];
     }
     
@@ -93,6 +95,9 @@ class Application
         echo "  config:set             Set global configuration value\n";
         echo "  config:list            List all global configuration\n";
         echo "  config:delete          Delete global configuration key\n\n";
+        echo "Branding Commands:\n";
+        echo "  branding:set           Set branding configuration\n";
+        echo "  branding:show          Show current branding configuration\n\n";
         echo "Examples:\n";
         echo "  php dynamiccrud init\n";
         echo "  php dynamiccrud list:tables\n";
@@ -110,6 +115,9 @@ class Application
         echo "  php dynamiccrud config:set application.name \"My App\"\n";
         echo "  php dynamiccrud config:get application.name\n";
         echo "  php dynamiccrud config:list\n";
+        echo "  php dynamiccrud branding:set app_name \"My App\"\n";
+        echo "  php dynamiccrud branding:set primary_color \"#667eea\"\n";
+        echo "  php dynamiccrud branding:show\n";
         echo "  php dynamiccrud clear:cache\n\n";
     }
     
