@@ -33,7 +33,7 @@ class ExportCSVCommand extends Command
         }
     }
 
-    private function getOption(array $args, string $name): ?string
+    protected function getOption(array $args, string $name): ?string
     {
         foreach ($args as $arg) {
             if (strpos($arg, $name . '=') === 0) {
