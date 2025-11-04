@@ -101,6 +101,8 @@ jobs:
       run: vendor/bin/phpunit --testdox --stop-on-failure
       env:
         DB_HOST: 127.0.0.1
+        DB_PORT: 3306
+        DB_PG_PORT: 5432
         DB_NAME: test
         DB_USER: root
         DB_PASS: rootpassword

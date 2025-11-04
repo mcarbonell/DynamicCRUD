@@ -14,10 +14,16 @@ class SchemaAnalyzerTest extends TestCase
 
     protected function setUp(): void
     {
+        $host = getenv('DB_HOST') ?: '127.0.0.1';
+        $port = getenv('DB_PORT') ?: 3306;
+        $dbname = getenv('DB_NAME') ?: 'test';
+        $user = getenv('DB_USER') ?: 'root';
+        $pass = getenv('DB_PASS') ?: 'rootpassword';
+
         $this->pdo = new PDO(
-            sprintf('mysql:host=%s;dbname=%s', getenv('DB_HOST'), getenv('DB_NAME')),
-            getenv('DB_USER'),
-            getenv('DB_PASS')
+            sprintf('mysql:host=%s;port=%d;dbname=%s', $host, $port, $dbname),
+            $user,
+            $pass
         );
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $this->analyzer = new SchemaAnalyzer($this->pdo);
