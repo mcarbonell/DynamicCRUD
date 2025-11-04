@@ -5,6 +5,7 @@ namespace DynamicCRUD;
 use PDO;
 use DynamicCRUD\I18n\Translator;
 use DynamicCRUD\Template\TemplateEngine;
+use DynamicCRUD\UI\Components;
 
 class FormGenerator
 {
@@ -54,29 +55,84 @@ class FormGenerator
 
     public function render(): string
     {
-        $html = '';
-        
-        // Add theme CSS variables if theme manager is set
-        if ($this->themeManager) {
-            $html .= $this->themeManager->renderCSSVariables();
-            $html .= $this->themeManager->renderBranding();
-        }
-        
+        $html = $this->renderTheme();
         $html .= $this->renderStyles() . "\n";
         $html .= $this->renderAssets() . "\n";
-        $enctype = $this->hasFileFields() ? ' enctype="multipart/form-data"' : '';
-        $html .= '<form method="POST" class="dynamic-crud-form"' . $enctype . '>' . "\n";
-        $html .= $this->renderCsrfField() . "\n";
         
         // Check if we should use tabbed layout
         if ($this->tableMetadata && $this->tableMetadata->getFormLayout() === 'tabs') {
-            return $this->renderTabbedForm($html, $this->tableMetadata);
+            return $html . $this->renderTabbedForm();
         }
+        
+        $html .= $this->renderFormOpen();
+        $html .= $this->renderFormFields();
+        $html .= $this->renderSubmitButton();
+        $html .= '</form>' . "\n";
+        $html .= $this->renderWorkflowButtons();
+        
+        return $html;
+    }
+    
+    private function renderTabbedForm(): string
+    {
+        $tabs = $this->tableMetadata->getTabs();
+        if (empty($tabs)) {
+            return $this->renderFormOpen() . $this->renderFormFields() . $this->renderSubmitButton() . '</form>' . "\n" . $this->renderWorkflowButtons();
+        }
+        
+        $tabsData = array_map(fn($tab) => ['id' => $tab['name'], 'label' => $tab['label']], $tabs);
+        $tabsContent = [];
+        
+        foreach ($tabs as $tab) {
+            $content = '';
+            foreach ($this->schema['columns'] as $column) {
+                if ($column['is_primary'] || ($column['metadata']['hidden'] ?? false)) continue;
+                if (!in_array($column['name'], $tab['fields'])) continue;
+                $content .= $this->renderField($column) . "\n";
+            }
+            $tabsContent[] = $content;
+        }
+        
+        $html = $this->renderFormOpen();
+        $html .= Components::tabs($tabsData, $tabsContent);
+        
+        if ($this->handler) {
+            $html .= $this->renderVirtualFields() . "\n";
+            $html .= $this->renderManyToManyFields() . "\n";
+        }
+        
+        $html .= $this->renderSubmitButton();
+        $html .= '</form>' . "\n";
+        $html .= $this->renderWorkflowButtons();
+        
+        return $html;
+    }
+
+    private function renderTheme(): string
+    {
+        if (!$this->themeManager) {
+            return '';
+        }
+        return $this->themeManager->renderCSSVariables() . $this->themeManager->renderBranding();
+    }
+    
+    private function renderFormOpen(): string
+    {
+        $enctype = $this->hasFileFields() ? ' enctype="multipart/form-data"' : '';
+        $html = '<form method="POST" class="dynamic-crud-form"' . $enctype . '>' . "\n";
+        $html .= sprintf('<input type="hidden" name="csrf_token" value="%s">', htmlspecialchars($this->csrfToken)) . "\n";
         
         $pk = $this->schema['primary_key'];
         if (!empty($this->data[$pk])) {
             $html .= sprintf('<input type="hidden" name="id" value="%s">', htmlspecialchars($this->data[$pk])) . "\n";
         }
+        
+        return $html;
+    }
+    
+    private function renderFormFields(): string
+    {
+        $html = '';
         
         foreach ($this->schema['columns'] as $column) {
             if ($column['is_primary']) continue;
@@ -84,124 +140,45 @@ class FormGenerator
             $html .= $this->renderField($column) . "\n";
         }
         
-        // Renderizar campos virtuales
         if ($this->handler) {
             $html .= $this->renderVirtualFields() . "\n";
-        }
-        
-        // Renderizar campos M:N
-        if ($this->handler) {
             $html .= $this->renderManyToManyFields() . "\n";
-        }
-        
-        $submitLabel = 'Guardar';
-        if ($this->handler && $this->handler->getTranslator()) {
-            $submitLabel = $this->handler->getTranslator()->t('form.submit');
-        }
-        $html .= sprintf('<button type="submit">%s</button>', htmlspecialchars($submitLabel)) . "\n";
-        $html .= '</form>' . "\n";
-        
-        // Renderizar botones de workflow si está habilitado
-        if ($this->handler && $this->handler->getWorkflowEngine()) {
-            $pk = $this->schema['primary_key'];
-            $recordId = $this->data[$pk] ?? null;
-            if ($recordId) {
-                $user = null;
-                if ($this->handler->getPermissionManager()) {
-                    $userId = $this->handler->getPermissionManager()->getCurrentUserId();
-                    $role = $this->handler->getPermissionManager()->getCurrentRole();
-                    if ($userId) {
-                        $user = ['id' => $userId, 'role' => $role];
-                    }
-                }
-                $html .= $this->handler->getWorkflowEngine()->renderTransitionButtons($recordId, $user) . "\n";
-            }
         }
         
         return $html;
     }
     
-    private function renderTabbedForm(string $formStart, $metadata): string
+    private function renderSubmitButton(): string
     {
-        $tabs = $metadata->getTabs();
-        if (empty($tabs)) {
-            return $this->render(); // Fallback to standard
-        }
-        
-        $html = $this->renderStyles() . "\n";
-        $html .= $this->renderAssets() . "\n";
-        $enctype = $this->hasFileFields() ? ' enctype="multipart/form-data"' : '';
-        $html .= '<form method="POST" class="dynamic-crud-form"' . $enctype . '>' . "\n";
-        $html .= $this->renderCsrfField() . "\n";
-        
-        $pk = $this->schema['primary_key'];
-        if (!empty($this->data[$pk])) {
-            $html .= sprintf('<input type="hidden" name="id" value="%s">', htmlspecialchars($this->data[$pk])) . "\n";
-        };
-        
-        // Tab navigation
-        $html .= '<div class="form-tabs">' . "\n";
-        $html .= '  <div class="tab-nav">' . "\n";
-        foreach ($tabs as $index => $tab) {
-            $active = $index === 0 ? ' active' : '';
-            $html .= sprintf('    <button type="button" class="tab-button%s" data-tab="%s">%s</button>',
-                $active, $tab['name'], htmlspecialchars($tab['label'])) . "\n";
-        }
-        $html .= '  </div>' . "\n";
-        
-        // Tab content
-        foreach ($tabs as $index => $tab) {
-            $active = $index === 0 ? ' active' : '';
-            $html .= sprintf('  <div class="tab-content%s" data-tab="%s">', $active, $tab['name']) . "\n";
-            
-            foreach ($this->schema['columns'] as $column) {
-                if ($column['is_primary']) continue;
-                if ($column['metadata']['hidden'] ?? false) continue;
-                if (!in_array($column['name'], $tab['fields'])) continue;
-                
-                $html .= $this->renderField($column) . "\n";
-            }
-            
-            $html .= '  </div>' . "\n";
-        }
-        
-        $html .= '</div>' . "\n";
-        
-        // Virtual fields and M:N
-        if ($this->handler) {
-            $html .= $this->renderVirtualFields() . "\n";
-            $html .= $this->renderManyToManyFields() . "\n";
-        }
-        
         $submitLabel = 'Guardar';
         if ($this->handler && $this->handler->getTranslator()) {
             $submitLabel = $this->handler->getTranslator()->t('form.submit');
         }
-        $html .= sprintf('<button type="submit">%s</button>', htmlspecialchars($submitLabel)) . "\n";
-        $html .= '</form>' . "\n";
-        
-        // Add tab switching JS
-        $html .= '<script>
-        document.querySelectorAll(".tab-button").forEach(btn => {
-            btn.addEventListener("click", function() {
-                const tabName = this.dataset.tab;
-                document.querySelectorAll(".tab-button").forEach(b => b.classList.remove("active"));
-                document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-                this.classList.add("active");
-                document.querySelector(`.tab-content[data-tab="${tabName}"]`).classList.add("active");
-            });
-        });
-        </script>' . "\n";
-        
-        return $html;
+        return sprintf('<button type="submit" style="padding: 12px 30px; font-size: 16px; font-weight: 600; color: white; background-color: var(--primary-color, #667eea); border: none; border-radius: 4px; cursor: pointer; transition: opacity 0.2s;">%s</button>' . "\n", htmlspecialchars($submitLabel));
     }
-
-    private function renderCsrfField(): string
+    
+    private function renderWorkflowButtons(): string
     {
-        return sprintf(
-            '<input type="hidden" name="csrf_token" value="%s">',
-            htmlspecialchars($this->csrfToken)
-        );
+        if (!$this->handler || !$this->handler->getWorkflowEngine()) {
+            return '';
+        }
+        
+        $pk = $this->schema['primary_key'];
+        $recordId = $this->data[$pk] ?? null;
+        if (!$recordId) {
+            return '';
+        }
+        
+        $user = null;
+        if ($this->handler->getPermissionManager()) {
+            $userId = $this->handler->getPermissionManager()->getCurrentUserId();
+            $role = $this->handler->getPermissionManager()->getCurrentRole();
+            if ($userId) {
+                $user = ['id' => $userId, 'role' => $role];
+            }
+        }
+        
+        return $this->handler->getWorkflowEngine()->renderTransitionButtons($recordId, $user) . "\n";
     }
 
     private function renderField(array $column): string
@@ -451,27 +428,16 @@ class FormGenerator
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--primary-color, #667eea); box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
         .form-group textarea { min-height: 100px; resize: vertical; }
-        button[type="submit"] { background: #667eea; color: white; padding: 12px 30px; border: none; border-radius: 4px; font-size: 16px; font-weight: 600; cursor: pointer; }
-        button[type="submit"]:hover { background: #5568d3; }
         .tooltip { position: relative; display: inline-block; margin-left: 5px; }
-        .tooltip-icon { display: inline-block; width: 16px; height: 16px; background: #667eea; color: white; border-radius: 50%; text-align: center; line-height: 16px; font-size: 12px; cursor: help; }
+        .tooltip-icon { display: inline-block; width: 16px; height: 16px; background: var(--primary-color, #667eea); color: white; border-radius: 50%; text-align: center; line-height: 16px; font-size: 12px; cursor: help; }
         .tooltip-text { visibility: hidden; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -100px; width: 200px; background: #333; color: white; text-align: center; padding: 8px; border-radius: 4px; font-size: 12px; font-weight: normal; }
         .tooltip:hover .tooltip-text, .tooltip:focus .tooltip-text { visibility: visible; }
         .file-info { margin-top: 8px; font-size: 14px; color: #666; }
         .file-preview img { max-width: 200px; margin-top: 10px; border-radius: 4px; }
-        .form-tabs { margin-bottom: 20px; }
-        .tab-nav { display: flex; gap: 5px; border-bottom: 2px solid #e0e0e0; margin-bottom: 20px; }
-        .tab-button { background: none; border: none; padding: 12px 24px; cursor: pointer; font-size: 14px; font-weight: 500; color: #666; border-bottom: 3px solid transparent; transition: all 0.2s; }
-        .tab-button:hover { color: #667eea; background: #f5f5f5; }
-        .tab-button.active { color: #667eea; border-bottom-color: #667eea; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
         .m2m-container { border: 1px solid #ddd; border-radius: 4px; padding: 15px; background: #f9f9f9; }
         .m2m-actions { margin-bottom: 10px; display: flex; gap: 10px; }
-        .m2m-actions button { padding: 6px 12px; font-size: 13px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer; }
-        .m2m-actions button:hover { background: #f0f0f0; }
         .m2m-search { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; }
         .m2m-options { max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; background: white; padding: 10px; }
         .m2m-option { padding: 6px; display: flex; align-items: center; gap: 8px; }
@@ -482,25 +448,24 @@ class FormGenerator
         .multiple-files-container { border: 2px dashed #ddd; border-radius: 8px; padding: 20px; background: #f9f9f9; }
         .multiple-files-container input[type="file"] { display: none; }
         .file-drop-zone { text-align: center; padding: 40px 20px; cursor: pointer; color: #666; font-size: 14px; transition: all 0.3s; }
-        .file-drop-zone:hover, .file-drop-zone.drag-over { background: #e8f0fe; border-color: #667eea; color: #667eea; }
+        .file-drop-zone:hover, .file-drop-zone.drag-over { background: #e8f0fe; border-color: var(--primary-color, #667eea); color: var(--primary-color, #667eea); }
         .file-previews { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 20px; }
         .file-preview-item { position: relative; border: 1px solid #ddd; border-radius: 4px; padding: 10px; background: white; }
         .file-preview-item img { width: 100%; height: 120px; object-fit: cover; border-radius: 4px; }
         .file-preview-item .file-name { font-size: 12px; margin-top: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .file-preview-item .remove-preview { position: absolute; top: 5px; right: 5px; background: #e53e3e; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 16px; line-height: 1; }
+        .file-preview-item .remove-preview { position: absolute; top: 5px; right: 5px; background: var(--danger-color, #e53e3e); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 16px; line-height: 1; }
         .existing-files { margin-top: 20px; }
         .existing-files h4 { margin-bottom: 10px; font-size: 14px; color: #333; }
         .existing-file { display: flex; align-items: center; gap: 10px; padding: 10px; background: white; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 8px; }
         .existing-file img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; }
-        .existing-file a { flex: 1; color: #667eea; text-decoration: none; }
+        .existing-file a { flex: 1; color: var(--primary-color, #667eea); text-decoration: none; }
         .existing-file a:hover { text-decoration: underline; }
-        .existing-file .remove-file { background: #e53e3e; color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 18px; line-height: 1; }
+        .existing-file .remove-file { background: var(--danger-color, #e53e3e); color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 18px; line-height: 1; }
         .app-branding { text-align: center; margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); border-radius: var(--border-radius); color: white; }
         .app-logo img { max-width: 150px; margin-bottom: 10px; }
         .app-name { font-size: 24px; font-weight: 700; }
         </style>';
         
-        // Apply theme if theme manager is set
         if ($this->themeManager) {
             $css = $this->themeManager->applyThemeToStyles($css);
         }
@@ -510,26 +475,37 @@ class FormGenerator
     
     private function renderAssets(): string
     {
-        $html = '';
-        
-        // Add translations for JavaScript
-        if ($this->handler && $this->handler->getTranslator()) {
-            $t = $this->handler->getTranslator();
-            $translations = [
-                'required' => $t->t('validation.required', ['field' => '']),
-                'email' => $t->t('validation.email', ['field' => '']),
-                'url' => $t->t('validation.url', ['field' => '']),
-                'number' => $t->t('validation.number', ['field' => '']),
-                'min' => $t->t('validation.min', ['field' => '', 'min' => '']),
-                'max' => $t->t('validation.max', ['field' => '', 'max' => '']),
-                'minlength' => $t->t('validation.minlength', ['field' => '', 'minlength' => '']),
-                'maxlength' => $t->t('validation.maxlength', ['field' => '', 'maxlength' => '']),
-            ];
-            $html .= '<script>window.DynamicCRUDTranslations = ' . json_encode($translations) . ';</script>';
+        return $this->renderTranslations() . $this->renderJavaScript();
+    }
+    
+    private function renderTranslations(): string
+    {
+        if (!$this->handler || !$this->handler->getTranslator()) {
+            return '';
         }
         
-        // Add multiple file upload JavaScript
-        $html .= '<script>
+        $t = $this->handler->getTranslator();
+        $translations = [
+            'required' => $t->t('validation.required', ['field' => '']),
+            'email' => $t->t('validation.email', ['field' => '']),
+            'url' => $t->t('validation.url', ['field' => '']),
+            'number' => $t->t('validation.number', ['field' => '']),
+            'min' => $t->t('validation.min', ['field' => '', 'min' => '']),
+            'max' => $t->t('validation.max', ['field' => '', 'max' => '']),
+            'minlength' => $t->t('validation.minlength', ['field' => '', 'minlength' => '']),
+            'maxlength' => $t->t('validation.maxlength', ['field' => '', 'maxlength' => '']),
+        ];
+        return '<script>window.DynamicCRUDTranslations = ' . json_encode($translations) . ';</script>';
+    }
+    
+    private function renderJavaScript(): string
+    {
+        return '<script>' . $this->getMultipleFileUploadJS() . '</script>';
+    }
+    
+    private function getMultipleFileUploadJS(): string
+    {
+        return '
         document.addEventListener("DOMContentLoaded", function() {
             document.querySelectorAll(".multiple-files-container").forEach(container => {
                 const input = container.querySelector("input[type=file]");
@@ -539,69 +515,38 @@ class FormGenerator
                 let selectedFiles = [];
                 
                 dropZone.addEventListener("click", () => input.click());
-                
-                dropZone.addEventListener("dragover", (e) => {
-                    e.preventDefault();
-                    dropZone.classList.add("drag-over");
-                });
-                
-                dropZone.addEventListener("dragleave", () => {
-                    dropZone.classList.remove("drag-over");
-                });
-                
-                dropZone.addEventListener("drop", (e) => {
-                    e.preventDefault();
-                    dropZone.classList.remove("drag-over");
-                    handleFiles(e.dataTransfer.files);
-                });
-                
-                input.addEventListener("change", (e) => {
-                    handleFiles(e.target.files);
-                });
+                dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("drag-over"); });
+                dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag-over"));
+                dropZone.addEventListener("drop", (e) => { e.preventDefault(); dropZone.classList.remove("drag-over"); handleFiles(e.dataTransfer.files); });
+                input.addEventListener("change", (e) => handleFiles(e.target.files));
                 
                 function handleFiles(files) {
-                    if (selectedFiles.length + files.length > maxFiles) {
-                        alert("Máximo " + maxFiles + " archivos permitidos");
-                        return;
-                    }
-                    
-                    Array.from(files).forEach(file => {
-                        selectedFiles.push(file);
-                        showPreview(file);
-                    });
-                    
+                    if (selectedFiles.length + files.length > maxFiles) { alert("Máximo " + maxFiles + " archivos permitidos"); return; }
+                    Array.from(files).forEach(file => { selectedFiles.push(file); showPreview(file); });
                     updateFileInput();
                 }
                 
                 function showPreview(file) {
                     const div = document.createElement("div");
                     div.className = "file-preview-item";
-                    
                     if (file.type.startsWith("image/")) {
                         const img = document.createElement("img");
                         img.src = URL.createObjectURL(file);
                         div.appendChild(img);
                     }
-                    
                     const name = document.createElement("div");
                     name.className = "file-name";
                     name.textContent = file.name;
                     div.appendChild(name);
-                    
                     const removeBtn = document.createElement("button");
                     removeBtn.className = "remove-preview";
                     removeBtn.textContent = "×";
                     removeBtn.type = "button";
                     removeBtn.onclick = () => {
                         const index = selectedFiles.indexOf(file);
-                        if (index > -1) {
-                            selectedFiles.splice(index, 1);
-                            div.remove();
-                            updateFileInput();
-                        }
+                        if (index > -1) { selectedFiles.splice(index, 1); div.remove(); updateFileInput(); }
                     };
                     div.appendChild(removeBtn);
-                    
                     previews.appendChild(div);
                 }
                 
@@ -611,19 +556,13 @@ class FormGenerator
                     input.files = dt.files;
                 }
                 
-                // Handle existing file removal
                 container.querySelectorAll(".remove-file").forEach(btn => {
                     btn.addEventListener("click", function() {
-                        if (confirm("¿Eliminar este archivo?")) {
-                            this.closest(".existing-file").remove();
-                        }
+                        if (confirm("¿Eliminar este archivo?")) this.closest(".existing-file").remove();
                     });
                 });
             });
-        });
-        </script>';
-        
-        return $html;
+        });';
     }
 
     private function getValidationAttributes(array $column): string
@@ -791,48 +730,31 @@ class FormGenerator
         $selectAllLabel = $translator ? $translator->t('m2n.select_all') : 'Seleccionar visibles';
         $clearAllLabel = $translator ? $translator->t('m2n.clear_all') : 'Limpiar todo';
         $searchPlaceholder = $translator ? $translator->t('m2n.search') : 'Buscar...';
+        $statsTemplate = $translator ? $translator->t('m2n.selected') : ':count de :total seleccionados';
         
-        $html = '<div class="form-group">' . "\n";
-        $html .= sprintf('  <label>%s</label>', htmlspecialchars($label)) . "\n";
-        $html .= '  <div class="m2m-container">' . "\n";
-        $html .= '    <div class="m2m-actions">' . "\n";
-        $html .= sprintf('      <button type="button" class="m2m-select-all">%s</button>', htmlspecialchars($selectAllLabel)) . "\n";
-        $html .= sprintf('      <button type="button" class="m2m-clear-all">%s</button>', htmlspecialchars($clearAllLabel)) . "\n";
-        $html .= '    </div>' . "\n";
-        $html .= sprintf('    <input type="text" class="m2m-search" placeholder="%s">', htmlspecialchars($searchPlaceholder)) . "\n";
-        $html .= '    <div class="m2m-options">' . "\n";
-        
+        $checkboxes = '';
         foreach ($options as $option) {
             $checked = in_array($option['value'], $selectedValues) ? ' checked' : '';
-            $html .= '      <div class="m2m-option">' . "\n";
-            $html .= sprintf(
-                '        <input type="checkbox" name="%s[]" id="%s_%s" value="%s"%s>' . "\n",
-                $fieldName,
-                $fieldName,
-                $option['value'],
-                htmlspecialchars($option['value']),
-                $checked
-            );
-            $html .= sprintf(
-                '        <label for="%s_%s">%s</label>' . "\n",
-                $fieldName,
-                $option['value'],
-                htmlspecialchars($option['label'])
-            );
-            $html .= '      </div>' . "\n";
+            $checkboxes .= sprintf(
+                '<div class="m2m-option"><input type="checkbox" name="%s[]" id="%s_%s" value="%s"%s><label for="%s_%s">%s</label></div>',
+                $fieldName, $fieldName, $option['value'], htmlspecialchars($option['value']), $checked,
+                $fieldName, $option['value'], htmlspecialchars($option['label'])
+            ) . "\n";
         }
         
-        $html .= '    </div>' . "\n";
+        $selectBtn = sprintf('<button type="button" class="m2m-select-all" style="padding: 6px 12px; font-size: 13px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">%s</button>', htmlspecialchars($selectAllLabel));
+        $clearBtn = sprintf('<button type="button" class="m2m-clear-all" style="padding: 6px 12px; font-size: 13px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">%s</button>', htmlspecialchars($clearAllLabel));
         
-        $statsTemplate = ':count de :total seleccionados';
-        if ($translator) {
-            $statsTemplate = $translator->t('m2n.selected');
-        }
-        $html .= sprintf('    <div class="m2m-stats" data-template="%s"></div>', htmlspecialchars($statsTemplate)) . "\n";
-        $html .= '  </div>' . "\n";
-        $html .= '</div>';
+        $content = sprintf(
+            '<div class="m2m-actions">%s%s</div><input type="text" class="m2m-search" placeholder="%s"><div class="m2m-options">%s</div><div class="m2m-stats" data-template="%s"></div>',
+            $selectBtn,
+            $clearBtn,
+            htmlspecialchars($searchPlaceholder),
+            $checkboxes,
+            htmlspecialchars($statsTemplate)
+        );
         
-        return $html;
+        return '<div class="form-group"><label>' . htmlspecialchars($label) . '</label><div class="m2m-container">' . $content . '</div></div>';
     }
     
     private function renderManyToManySelect(string $fieldName, string $label, array $options, array $selectedValues): string

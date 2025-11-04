@@ -106,7 +106,8 @@ class FormGeneratorTest extends TestCase
         $generator = new FormGenerator($this->schema, []);
         $html = $generator->render();
 
-        $this->assertStringContainsString('<button type="submit">Guardar</button>', $html);
+        $this->assertStringContainsString('<button type="submit"', $html);
+        $this->assertStringContainsString('Guardar</button>', $html);
     }
 
     public function testRenderLabels(): void

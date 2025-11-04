@@ -29,7 +29,7 @@ abstract class Command
     protected function getPDO(): \PDO
     {
         $config = $this->loadConfig();
-        $db = $config['database'] ?? [];
+        $db = $config['database'] ?? $config;
         
         $dsn = sprintf(
             '%s:host=%s;dbname=%s',

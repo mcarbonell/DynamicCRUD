@@ -5,6 +5,7 @@ namespace DynamicCRUD;
 use PDO;
 use DynamicCRUD\Metadata\TableMetadata;
 use DynamicCRUD\Security\PermissionManager;
+use DynamicCRUD\UI\Components;
 
 class ListGenerator
 {
@@ -31,42 +32,44 @@ class ListGenerator
         
         $data = $this->fetchData($page, $perPage, $search);
         
-        $displayName = $this->tableMetadata?->getDisplayName() ?? ucfirst($this->table);
-        $icon = $this->tableMetadata?->getIcon();
-        $color = $this->tableMetadata?->getColor();
-        
         $html = '<div class="list-container">' . "\n";
-        
-        // Header
-        $html .= '<div class="list-header" style="' . ($color ? "border-left: 4px solid $color;" : '') . '">' . "\n";
-        if ($icon) {
-            $html .= sprintf('  <span class="list-icon">%s</span>', $icon) . "\n";
-        }
-        $html .= sprintf('  <h2>%s</h2>', htmlspecialchars($displayName)) . "\n";
-        
-        if ($desc = $this->tableMetadata?->getDescription()) {
-            $html .= sprintf('  <p class="list-description">%s</p>', htmlspecialchars($desc)) . "\n";
-        }
-        $html .= '</div>' . "\n";
-        
-        // Search
-        if (!empty($this->tableMetadata?->getSearchableFields())) {
-            $html .= $this->renderSearch($search) . "\n";
-        }
-        
-        // Table or Cards
-        if ($this->tableMetadata?->hasCardView()) {
-            $html .= $this->renderCards($data['records']) . "\n";
-        } else {
-            $html .= $this->renderTable($data['records']) . "\n";
-        }
-        
-        // Pagination
-        $html .= $this->renderPagination($data['total'], $page, $perPage) . "\n";
-        
+        $html .= $this->renderHeader();
+        $html .= $this->renderSearchAndFilters($search);
+        $html .= $this->renderContent($data['records']);
+        $html .= $this->renderPagination($data['total'], $page, $perPage);
         $html .= '</div>';
         
         return $html;
+    }
+    
+    private function renderHeader(): string
+    {
+        $displayName = $this->tableMetadata?->getDisplayName() ?? ucfirst($this->table);
+        $icon = $this->tableMetadata?->getIcon();
+        $color = $this->tableMetadata?->getColor();
+        $desc = $this->tableMetadata?->getDescription();
+        
+        $header = ($icon ? $icon . ' ' : '') . htmlspecialchars($displayName);
+        $content = $desc ? '<p style="margin: 8px 0 0 0; color: #666; font-size: 14px;">' . htmlspecialchars($desc) . '</p>' : '';
+        
+        $style = $color ? ' style="border-left: 4px solid ' . $color . '; padding-left: 16px;"' : '';
+        return '<div class="list-header"' . $style . '><h2 style="margin: 0;">' . $header . '</h2>' . $content . '</div>' . "\n";
+    }
+    
+    private function renderSearchAndFilters(string $search): string
+    {
+        if (empty($this->tableMetadata?->getSearchableFields())) {
+            return '';
+        }
+        return $this->renderSearch($search) . "\n";
+    }
+    
+    private function renderContent(array $records): string
+    {
+        if ($this->tableMetadata?->hasCardView()) {
+            return $this->renderCards($records) . "\n";
+        }
+        return $this->renderTableWithComponents($records) . "\n";
     }
     
     private function fetchData(int $page, int $perPage, string $search): array
@@ -226,83 +229,61 @@ class ListGenerator
         return $html;
     }
     
-    private function renderTable(array $records): string
+    private function renderTableWithComponents(array $records): string
     {
         if (empty($records)) {
-            return '<p>No hay registros.</p>';
+            return Components::alert('No hay registros.', 'info');
         }
         
         $columns = array_keys($records[0]);
         $actions = $this->tableMetadata?->getActions() ?? ['edit', 'delete'];
         
-        $html = '<table class="list-table">' . "\n";
-        $html .= '  <thead>' . "\n";
-        $html .= '    <tr>' . "\n";
-        
-        foreach ($columns as $col) {
-            $html .= sprintf('      <th>%s</th>', htmlspecialchars(ucfirst(str_replace('_', ' ', $col)))) . "\n";
-        }
-        
+        $headers = array_map(fn($col) => ucfirst(str_replace('_', ' ', $col)), $columns);
         if (!empty($actions)) {
-            $html .= '      <th>Acciones</th>' . "\n";
+            $headers[] = 'Acciones';
         }
         
-        $html .= '    </tr>' . "\n";
-        $html .= '  </thead>' . "\n";
-        $html .= '  <tbody>' . "\n";
-        
+        $rows = [];
         foreach ($records as $record) {
-            $html .= '    <tr>' . "\n";
-            
-            foreach ($columns as $col) {
-                $html .= sprintf('      <td>%s</td>', htmlspecialchars($record[$col] ?? '')) . "\n";
-            }
+            $row = array_map(fn($col) => htmlspecialchars($record[$col] ?? ''), $columns);
             
             if (!empty($actions)) {
-                $html .= '      <td>' . "\n";
-                $pk = $this->schema['primary_key'] ?? 'id';
-                $id = $record[$pk] ?? $record['id'] ?? null;
-                
-                if ($id === null) {
-                    $html .= "      </td>\n";
-                    continue;
-                }
-                
-                $actionButtons = [];
-                
-                // Preserve query parameters in action links
-                $queryParams = $_GET;
-                unset($queryParams['id'], $queryParams['delete'], $queryParams['view']);
-                $queryString = http_build_query($queryParams);
-                $separator = $queryString ? '&' : '';
-                
-                foreach ($actions as $action) {
-                    if ($action === 'edit') {
-                        if (!$this->permissionManager || $this->permissionManager->canUpdate($record)) {
-                            $actionButtons[] = sprintf('<a href="?%sid=%s" class="action-edit">✏️ Editar</a>', $queryString . $separator, $id);
-                        }
-                    } elseif ($action === 'delete') {
-                        if (!$this->permissionManager || $this->permissionManager->canDelete($record)) {
-                            $actionButtons[] = sprintf('<a href="?%sdelete=%s" class="action-delete" onclick="return confirm(\'¿Eliminar?\')">🗑️ Eliminar</a>', $queryString . $separator, $id);
-                        }
-                    } elseif ($action === 'view') {
-                        if (!$this->permissionManager || $this->permissionManager->canRead($record)) {
-                            $actionButtons[] = sprintf('<a href="?%sview=%s" class="action-view">👁️ Ver</a>', $queryString . $separator, $id);
-                        }
-                    }
-                }
-                
-                $html .= '        ' . implode(' ', $actionButtons) . "\n";
-                $html .= "      </td>\n";
+                $row[] = $this->renderActionButtons($record, $actions);
             }
             
-            $html .= '    </tr>' . "\n";
+            $rows[] = $row;
         }
         
-        $html .= '  </tbody>' . "\n";
-        $html .= '</table>' . "\n";
+        return Components::table($headers, $rows, ['striped' => true, 'hover' => true]);
+    }
+    
+    private function renderActionButtons(array $record, array $actions): string
+    {
+        $pk = $this->schema['primary_key'] ?? 'id';
+        $id = $record[$pk] ?? $record['id'] ?? null;
         
-        return $html;
+        if ($id === null) {
+            return '';
+        }
+        
+        $queryParams = $_GET;
+        unset($queryParams['id'], $queryParams['delete'], $queryParams['view']);
+        $queryString = http_build_query($queryParams);
+        $separator = $queryString ? '&' : '';
+        
+        $buttons = [];
+        
+        foreach ($actions as $action) {
+            if ($action === 'edit' && (!$this->permissionManager || $this->permissionManager->canUpdate($record))) {
+                $buttons[] = sprintf('<a href="?%sid=%s" style="color: #667eea; text-decoration: none; margin-right: 8px;">✏️ Editar</a>', $queryString . $separator, $id);
+            } elseif ($action === 'delete' && (!$this->permissionManager || $this->permissionManager->canDelete($record))) {
+                $buttons[] = sprintf('<a href="?%sdelete=%s" style="color: #e53e3e; text-decoration: none; margin-right: 8px;" onclick="return confirm(\'¿Eliminar?\')">🗑️ Eliminar</a>', $queryString . $separator, $id);
+            } elseif ($action === 'view' && (!$this->permissionManager || $this->permissionManager->canRead($record))) {
+                $buttons[] = sprintf('<a href="?%sview=%s" style="color: #4299e1; text-decoration: none; margin-right: 8px;">👁️ Ver</a>', $queryString . $separator, $id);
+            }
+        }
+        
+        return implode('', $buttons);
     }
     
     private function renderCards(array $records): string
@@ -344,26 +325,11 @@ class ListGenerator
             return '';
         }
         
-        // Build query string preserving all parameters
         $queryParams = $_GET;
         unset($queryParams['page']);
         $queryString = http_build_query($queryParams);
-        $separator = $queryString ? '&' : '';
+        $baseUrl = '?' . ($queryString ? $queryString . '&' : '') . 'page=';
         
-        $html = '<div class="list-pagination">' . "\n";
-        
-        if ($page > 1) {
-            $html .= sprintf('  <a href="?%spage=%d">« Anterior</a>', $queryString . $separator, $page - 1) . "\n";
-        }
-        
-        $html .= sprintf('  <span>Página %d de %d</span>', $page, $totalPages) . "\n";
-        
-        if ($page < $totalPages) {
-            $html .= sprintf('  <a href="?%spage=%d">Siguiente »</a>', $queryString . $separator, $page + 1) . "\n";
-        }
-        
-        $html .= '</div>' . "\n";
-        
-        return $html;
+        return Components::pagination($page, $totalPages, $baseUrl);
     }
 }

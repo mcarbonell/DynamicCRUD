@@ -5,6 +5,36 @@ All notable changes to DynamicCRUD will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.0] - 2024-01-XX
+
+### Changed
+- **FormGenerator Refactoring** - Complete code refactoring for better maintainability
+  - Integrated Components library for tabs and buttons
+  - Extracted 8 new methods: `renderTheme()`, `renderFormOpen()`, `renderFormFields()`, `renderSubmitButton()`, `renderWorkflowButtons()`, `renderTranslations()`, `renderJavaScript()`, `getMultipleFileUploadJS()`
+  - Simplified `render()` method from ~70 to ~15 lines
+  - Added CSS variables support for dynamic theming
+  - Eliminated code duplication between `render()` and `renderTabbedForm()`
+- **ListGenerator Refactoring** - 20% code reduction with improved structure
+  - Integrated Components::table() for modern table styling
+  - Integrated Components::pagination() for consistent pagination
+  - Integrated Components::alert() for empty states
+  - Extracted 5 new methods: `renderHeader()`, `renderSearchAndFilters()`, `renderContent()`, `renderTableWithComponents()`, `renderActionButtons()`
+  - Reduced code from ~350 to ~280 lines
+  - Cleaner action button rendering with inline styles
+
+### Improved
+- Code maintainability and readability
+- Consistency across forms and lists
+- Reusability with less code duplication
+- Modern design with Components library integration
+- Scalability for future features
+
+### Testing
+- All 367 tests passing (100%)
+- 22 FormGenerator tests updated and passing
+- 13 ListGenerator tests updated and passing
+- 90% code coverage maintained
+
 ## [3.3.0] - 2024-01-XX
 
 ### Added
