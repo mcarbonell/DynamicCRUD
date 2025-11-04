@@ -24,6 +24,9 @@ class TableMetadata
             return [];
         }
         
+        // Decode HTML entities that MySQL may have escaped
+        $comment = html_entity_decode($comment, ENT_QUOTES | ENT_HTML5);
+        
         $decoded = json_decode($comment, true);
         return is_array($decoded) ? $decoded : [];
     }
@@ -240,5 +243,41 @@ class TableMetadata
     public function getSoftDeleteConfig(): array
     {
         return $this->metadata['behaviors']['soft_deletes'] ?? [];
+    }
+    
+    // Validation Rules
+    public function hasValidationRules(): bool
+    {
+        return isset($this->metadata['validation_rules']);
+    }
+    
+    public function getValidationRules(): array
+    {
+        return $this->metadata['validation_rules'] ?? [];
+    }
+    
+    public function hasBusinessRules(): bool
+    {
+        return isset($this->metadata['business_rules']);
+    }
+    
+    public function getBusinessRules(): array
+    {
+        return $this->metadata['business_rules'] ?? [];
+    }
+    
+    public function getAllRules(): array
+    {
+        $rules = [];
+        
+        if ($this->hasValidationRules()) {
+            $rules['validation_rules'] = $this->getValidationRules();
+        }
+        
+        if ($this->hasBusinessRules()) {
+            $rules['business_rules'] = $this->getBusinessRules();
+        }
+        
+        return $rules;
     }
 }

@@ -1,54 +1,160 @@
-# DynamicCRUD - Technology Stack
+# Technology Stack
 
 ## Programming Languages
-- **PHP 8.0+**: Core language (requires modern PHP features)
-  - Uses typed properties, named arguments, match expressions
-  - PSR-4 autoloading standard
-  - Strict types enabled in most files
+
+### PHP 8.0+
+- **Minimum Version**: PHP 8.0
+- **Tested Versions**: 8.0, 8.1, 8.2, 8.3, 8.4
+- **Key Features Used**:
+  - Named arguments
+  - Union types
+  - Nullsafe operator (`?->`)
+  - Match expressions
+  - Constructor property promotion
+  - Attributes (for future use)
+  - Arrow functions
+
+### SQL
+- **MySQL 5.7+** - Primary database support
+- **PostgreSQL 12+** - Full support via adapter pattern
+
+### JavaScript (ES6+)
+- Client-side validation
+- Dynamic UI interactions (tabs, multi-select)
+- AJAX form submissions (optional)
+
+### CSS3
+- Embedded styles in FormGenerator
+- Responsive design
+- Accessibility features
 
 ## Required PHP Extensions
-- **ext-pdo**: Database connectivity (PDO)
-- **ext-fileinfo**: MIME type detection for file uploads (finfo)
-- **ext-json**: JSON parsing for metadata and translations
 
-## Databases Supported
-- **MySQL 5.7+**: Primary database with full feature support
-- **PostgreSQL 12+**: Full support via adapter pattern
-  - Auto-detects database driver from PDO connection
-  - Adapter pattern allows easy extension to SQL Server, SQLite, etc.
+### Core Extensions
+- `ext-pdo` - Database abstraction layer (required)
+- `ext-fileinfo` - MIME type detection for file uploads (required)
+- `ext-json` - JSON parsing for metadata (required)
 
-## Dependencies (Composer)
+### Optional Extensions
+- `ext-mbstring` - Multi-byte string support (recommended for i18n)
+- `ext-intl` - Internationalization support (recommended)
+
+## Dependencies
 
 ### Production Dependencies
-```json
-{
-  "php": ">=8.0",
-  "ext-pdo": "*",
-  "ext-fileinfo": "*",
-  "ext-json": "*"
-}
-```
+**None** - Zero external dependencies for production use
 
 ### Development Dependencies
+- `phpunit/phpunit` - ^9.5 || ^10.0
+  - Unit testing framework
+  - Code coverage analysis
+  - 242 tests with 90% coverage
+
+## Build System
+
+### Composer
+- **Package Manager**: Composer 2.x
+- **Autoloading**: PSR-4
+  - `DynamicCRUD\` → `src/`
+  - `DynamicCRUD\Tests\` → `tests/`
+- **Binary**: `bin/dynamiccrud` (CLI tool)
+
+### Package Configuration
 ```json
 {
-  "phpunit/phpunit": "^9.5 || ^10.0"
+  "name": "dynamiccrud/dynamiccrud",
+  "type": "library",
+  "require": {
+    "php": ">=8.0",
+    "ext-pdo": "*",
+    "ext-fileinfo": "*",
+    "ext-json": "*"
+  }
 }
 ```
 
-## Build System
-- **Composer**: Dependency management and autoloading
-  - Package name: `dynamiccrud/dynamiccrud`
-  - Type: `library`
-  - License: MIT
-  - PSR-4 autoloading: `DynamicCRUD\` → `src/`
+## Database Systems
 
-## Testing Framework
-- **PHPUnit 9.5+ or 10.0+**: Unit and integration testing
-  - 195 tests across 16 test files
-  - 76% pass rate (149 passing, 40 failing, 6 skipped)
-  - Code coverage tracking (excludes Cache directory)
-  - Test namespace: `DynamicCRUD\Tests\`
+### MySQL
+- **Version**: 5.7+
+- **Features Used**:
+  - Foreign key constraints
+  - JSON column comments
+  - ENUM types
+  - Transactions
+  - Prepared statements
+
+### PostgreSQL
+- **Version**: 12+
+- **Features Used**:
+  - Foreign key constraints
+  - JSON column comments
+  - ENUM types (via CHECK constraints)
+  - Transactions
+  - Prepared statements
+- **Adapter**: `PostgreSQLAdapter` handles dialect differences
+
+## Development Tools
+
+### Testing
+```bash
+# Run all tests
+php vendor/phpunit/phpunit/phpunit
+
+# Run specific test
+php vendor/phpunit/phpunit/phpunit tests/DynamicCRUDTest.php
+
+# Run with coverage
+php vendor/phpunit/phpunit/phpunit --coverage-html coverage/
+```
+
+### CLI Tool
+```bash
+# Initialize project
+php bin/dynamiccrud init
+
+# List tables
+php bin/dynamiccrud list:tables
+
+# Generate metadata
+php bin/dynamiccrud generate:metadata users
+
+# Validate metadata
+php bin/dynamiccrud validate:metadata users
+
+# Clear cache
+php bin/dynamiccrud clear:cache
+```
+
+### Docker Development
+```bash
+# Start MySQL + PostgreSQL
+docker-compose up -d
+
+# Stop services
+docker-compose down
+
+# View logs
+docker-compose logs -f
+```
+
+**Services**:
+- MySQL 8.0 on port 3306
+- PostgreSQL 15 on port 5432
+- phpMyAdmin on port 8080
+
+## CI/CD Pipeline
+
+### GitHub Actions
+- **Workflow Files**: `.github/workflows/`
+  - `tests.yml` - Run test suite on PHP 8.0-8.3
+  - `code-quality.yml` - Code style and static analysis
+  - `release.yml` - Automated releases
+
+### Test Matrix
+- PHP versions: 8.0, 8.1, 8.2, 8.3
+- Databases: MySQL 8.0, PostgreSQL 15
+- OS: Ubuntu latest
 
 ## Development Commands
 
@@ -57,131 +163,107 @@
 # Install dependencies
 composer install
 
-# Install for production (no dev dependencies)
-composer install --no-dev
+# Install for development
+composer install --dev
 ```
 
 ### Testing
 ```bash
 # Run all tests
-vendor/bin/phpunit
+composer test
 
-# Run with detailed output
-vendor/bin/phpunit --testdox
-
-# Run specific test file
-vendor/bin/phpunit tests/FormGeneratorTest.php
-
-# Run with coverage (requires Xdebug)
-vendor/bin/phpunit --coverage-html coverage/
+# Run specific test suite
+php vendor/phpunit/phpunit/phpunit tests/AuthenticationManagerTest.php
 ```
 
-### Windows-specific
+### Code Quality
 ```bash
-# Run tests on Windows
-run-tests.bat
+# PHP syntax check
+find src/ -name "*.php" -exec php -l {} \;
 
-# Or use vendor\bin\phpunit.bat directly
-vendor\bin\phpunit.bat
+# Run static analysis (if configured)
+composer analyze
 ```
 
 ### Cache Management
 ```bash
-# Clear template cache
+# Clear schema cache
 php examples/clear_cache.php
 
-# Or manually delete cache files
+# Clear template cache
 rm -rf cache/templates/*
-rm cache/*.cache
 ```
 
-## CI/CD Pipeline (GitHub Actions)
+## Project Configuration Files
 
-### Workflows
-1. **tests.yml**: Runs PHPUnit tests on PHP 8.0, 8.1, 8.2, 8.3
-2. **code-quality.yml**: Code style and static analysis checks
-3. **release.yml**: Automated releases to Packagist
+### `composer.json`
+- Package metadata
+- Dependencies
+- Autoloading rules
+- CLI binary registration
 
-### Test Environment Variables
-```xml
-<env name="DB_HOST" value="localhost"/>
-<env name="DB_NAME" value="test"/>
-<env name="DB_USER" value="root"/>
-<env name="DB_PASS" value="rootpassword"/>
-```
+### `phpunit.xml`
+- Test suite configuration
+- Code coverage settings
+- Bootstrap file
+- Test directories
 
-## Docker Support
+### `docker-compose.yml`
+- MySQL service configuration
+- PostgreSQL service configuration
+- phpMyAdmin service
+- Volume mappings
 
-### Services (docker-compose.yml)
-- **MySQL 8.0**: Port 3306, database `dynamiccrud_db`
-- **PostgreSQL 15**: Port 5432, database `dynamiccrud_db`
-- **Adminer**: Web-based database management (port 8080)
+### `.gitignore`
+- Vendor directory
+- Cache files
+- Upload files
+- IDE configurations
 
-### Docker Commands
-```bash
-# Start all services
-docker-compose up -d
+## Performance Considerations
 
-# Stop services
-docker-compose down
+### Caching
+- **Schema Cache**: File-based caching of database schema
+- **Template Cache**: Compiled template caching
+- **Cache Location**: `cache/` directory
+- **Cache Strategy**: Pluggable via `CacheStrategy` interface
 
-# View logs
-docker-compose logs -f
+### Database Optimization
+- Prepared statements (prevents SQL injection + performance)
+- Connection reuse (single PDO instance)
+- Lazy loading of schema metadata
+- Efficient JOIN queries for relationships
 
-# Access MySQL
-docker-compose exec mysql mysql -u root -p
-
-# Access PostgreSQL
-docker-compose exec postgres psql -U postgres -d dynamiccrud_db
-```
-
-## File Structure Standards
-- **PSR-4 Autoloading**: `DynamicCRUD\` namespace maps to `src/` directory
-- **Test Namespace**: `DynamicCRUD\Tests\` maps to `tests/` directory
-- **Naming Convention**: PascalCase for classes, camelCase for methods
-- **File Naming**: Class name matches filename (e.g., `DynamicCRUD.php`)
-
-## Code Quality Tools
-- **PHPUnit**: Unit testing framework
-- **GitHub Actions**: Automated testing and quality checks
-- **Composer Scripts**: Custom commands for development tasks
-
-## Browser Compatibility
-- **Client-side JavaScript**: ES6+ features (arrow functions, const/let)
-- **CSS**: Modern CSS3 (flexbox, grid, custom properties)
-- **Target Browsers**: Modern browsers (Chrome, Firefox, Safari, Edge)
-
-## Performance Optimizations
-- **Schema Caching**: File-based cache for database metadata (reduces queries)
-- **Template Caching**: Compiled templates cached to PHP files
-- **Prepared Statements**: All database queries use PDO prepared statements
-- **Lazy Loading**: Components initialized only when needed
+### Memory Management
+- Streaming file uploads (no memory buffering)
+- Pagination for large datasets
+- Lazy loading of related data
 
 ## Security Technologies
-- **CSRF Tokens**: Session-based token generation and validation
-- **Prepared Statements**: PDO parameterized queries (SQL injection prevention)
-- **finfo**: Real MIME type detection for file uploads (not just extension)
-- **htmlspecialchars**: XSS prevention for output escaping
-- **Transactions**: Database transactions with automatic rollback
 
-## Internationalization (i18n)
+### Built-in Security
+- **CSRF Protection**: Token-based validation
+- **SQL Injection Prevention**: Prepared statements only
+- **XSS Protection**: Automatic HTML escaping
+- **Password Hashing**: bcrypt (PASSWORD_DEFAULT)
+- **Session Management**: Secure session handling
+- **Rate Limiting**: Login attempt throttling
+
+### File Upload Security
+- Real MIME type validation with `finfo`
+- File size limits
+- Allowed extensions whitelist
+- Secure file naming
+
+## Internationalization
+
+### Translation System
 - **Format**: JSON files in `src/I18n/locales/`
 - **Languages**: English (en), Spanish (es), French (fr)
-- **Detection**: URL parameter (?lang=), session, or browser Accept-Language header
-- **Client-side**: JavaScript translations embedded in generated forms
+- **Detection**: URL parameter, session, browser Accept-Language
+- **Fallback**: English as default
 
-## Template System
-- **Syntax**: Blade-like (Laravel-inspired)
-- **Features**: @if, @foreach, @extends, @section, @yield, @include
-- **Escaping**: {{ $var }} (escaped), {!! $var !!} (raw)
-- **Caching**: Compiled templates stored in `cache/templates/`
-
-## Version Control
-- **Git**: Source control with GitHub hosting
-- **Branching**: Feature branches, main branch for releases
-- **Tagging**: Semantic versioning (v1.0.0, v1.1.0, etc.)
-
-## Package Distribution
-- **Packagist**: Official Composer package repository
-- **GitHub Releases**: Tagged releases with changelogs
-- **Badges**: Tests, code quality, version, downloads, license
+### Supported Locales
+- `en` - English (default)
+- `es` - Spanish (Español)
+- `fr` - French (Français)

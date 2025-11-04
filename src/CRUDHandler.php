@@ -149,6 +149,36 @@ class CRUDHandler
         // Hook: afterValidate
         $data = $this->executeHook('afterValidate', $data);
         
+        // Advanced validation rules from metadata
+        if ($this->tableMetadata && $this->tableMetadata->hasValidationRules()) {
+            $rulesEngine = new ValidationRulesEngine(
+                $this->pdo,
+                $this->table,
+                $this->tableMetadata->getAllRules()
+            );
+            
+            $ruleErrors = $rulesEngine->validate($data, $isUpdate ? (int)$_POST['id'] : null);
+            
+            if (!empty($ruleErrors)) {
+                $this->pdo->rollBack();
+                return ['success' => false, 'errors' => $ruleErrors];
+            }
+            
+            // Business rules validation
+            $userId = null;
+            if ($this->permissionManager) {
+                $userId = $this->permissionManager->getCurrentUserId();
+            } elseif (session_status() === PHP_SESSION_ACTIVE && isset($_SESSION['user_id'])) {
+                $userId = $_SESSION['user_id'];
+            }
+            $businessErrors = $rulesEngine->validateBusinessRules($data, $userId);
+            
+            if (!empty($businessErrors)) {
+                $this->pdo->rollBack();
+                return ['success' => false, 'errors' => $businessErrors];
+            }
+        }
+        
         // Apply automatic behaviors
         $data = $this->applyAutomaticBehaviors($data, $isUpdate);
         

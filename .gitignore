@@ -13,7 +13,8 @@ uploads/*
 examples/uploads/
 examples/uploads/*
 !examples/uploads/.gitkeep
-# Private documents
+
+# Local documents
 local_docs/
 
 # IDE
@@ -43,5 +44,3 @@ tests/temp_cache/
 # Composer lock (allow flexibility in CI)
 # composer.lock is tracked for production stability
 # but CI uses composer update for multi-version testing
-.amazonq/rules/memory-bank/guidelines.md
-.amazonq/rules/memory-bank/structure.md

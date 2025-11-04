@@ -93,7 +93,7 @@ Agradecimiento especial a:
 
 **Proyecto**: DynamicCRUD  
 **Versión**: 1.0.0  
-**Fecha**: 2025-01-31  
+**Fecha**: 2025-10-29  
 **Licencia**: MIT
 
 ---

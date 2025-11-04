@@ -1,71 +1,88 @@
-# DynamicCRUD - Product Overview
+# Product Overview
 
 ## Purpose
-DynamicCRUD is a PHP library that automatically generates fully functional CRUD (Create, Read, Update, Delete) forms with validation based on database schema structure. It eliminates repetitive CRUD code by analyzing MySQL/PostgreSQL schemas and creating secure, validated forms out of the box.
+DynamicCRUD is a powerful PHP library that automatically generates CRUD (Create, Read, Update, Delete) forms with validation based on database structure. It eliminates repetitive CRUD code by analyzing MySQL/PostgreSQL schemas and creating fully functional forms with validation, security, and advanced features out of the box.
 
 ## Value Proposition
-- **Zero-config form generation**: Analyze database schema and generate forms automatically
-- **Time savings**: Reduce CRUD development from hours to minutes (3 lines of code for basic CRUD)
-- **Built-in security**: CSRF protection, SQL injection prevention, XSS protection, file upload security
-- **Production-ready**: Comprehensive validation (client + server), transaction safety, audit logging
+- **Zero-config form generation** - Analyzes database schema and generates forms automatically
+- **Metadata-driven configuration** - Configure everything via JSON in database table/column comments
+- **Enterprise-ready security** - Built-in CSRF protection, SQL injection prevention, XSS protection
+- **Production-ready features** - Authentication, RBAC, soft deletes, audit logging, i18n, templates
+- **Developer-friendly** - 3 lines of code for basic CRUD, extensive hooks for customization
 
 ## Key Features
 
-### Core Capabilities
-- Automatic form generation from SQL schema with zero configuration
-- Server-side and client-side JavaScript validation
-- CSRF token protection built-in
-- SQL injection prevention via prepared statements
-- Smart NULL handling for nullable database fields
-- File upload support with real MIME type validation (finfo)
-- ENUM field support with auto-generated select dropdowns
+### Core CRUD
+- Automatic form generation from SQL schema
+- Full CRUD operations (Create, Read, Update, Delete)
+- Smart NULL handling for nullable fields
+- ENUM field support with auto-generated selects
+- File uploads with MIME type validation
+- Automatic validation (server + client-side JavaScript)
 
-### Relationship Management
-- Foreign key auto-detection with dropdown selects
+### Relationships
+- Foreign keys auto-detection with dropdown selects
 - Many-to-many relationships with multi-select UI
-- Custom display columns for related data (e.g., show "full_name" instead of "id")
-- Advanced M:N UI with checkboxes and search functionality
+- Custom display columns for related data
+- Automatic JOIN queries for related data
+
+### Security & Authentication (v2.1)
+- **Authentication System** - Register, login, logout with rate limiting
+- **RBAC** - Role-based access control with row-level security
+- **Soft Deletes** - Mark records as deleted, restore or permanently delete
+- CSRF protection built-in
+- SQL injection prevention with prepared statements
+- XSS protection with automatic escaping
+- Password hashing (bcrypt)
+- Session management with remember me
+
+### Table Metadata System (v2.0)
+- **UI/UX Customization** - Display names, icons, colors, list views
+- **Dynamic Forms** - Tabbed layouts, fieldsets, organized field groups
+- **Automatic Behaviors** - Auto-timestamps, auto-slug generation
+- **Search & Filters** - Full-text search, dropdown filters, date ranges
 
 ### Advanced Features
-- **Multi-database support**: MySQL 5.7+ and PostgreSQL 12+ via adapter pattern
-- **Internationalization (i18n)**: 3 languages included (English, Spanish, French) with auto-detection
-- **Template System**: Blade-like syntax for custom layouts with inheritance and partials
-- **Hooks/Events**: 10 lifecycle hooks (beforeValidate, afterValidate, beforeSave, afterSave, etc.)
-- **Virtual fields**: Non-database fields like password confirmation, terms acceptance
-- **Automatic transactions**: Rollback on error for data integrity
-- **Audit logging**: Track who changed what, when, and from where (IP tracking)
-- **Caching system**: Schema metadata caching for performance
-- **Accessibility**: ARIA labels, keyboard navigation support
-
-### Customization
-- JSON metadata in column comments for field configuration (16+ options)
-- Custom validators and transformers via hooks
-- Template engine for complete UI control
-- Extensible via adapter pattern for new databases
+- **CLI Tool** - Command-line interface for project management
+- **Multi-database support** - MySQL 5.7+, PostgreSQL 12+
+- **Internationalization (i18n)** - 3 languages (EN, ES, FR)
+- **Template System** - Blade-like syntax for custom layouts
+- **Hooks/Events system** - 10 lifecycle hooks for custom logic
+- **Virtual fields** - Password confirmation, terms acceptance
+- **Automatic transactions** - Rollback on error
+- **Audit logging** - Change tracking with user/IP/timestamp
+- **Caching system** - Schema metadata caching for performance
+- **Accessibility** - ARIA labels, keyboard navigation
 
 ## Target Users
 
 ### Primary Users
-- **PHP developers** building admin panels, backoffice systems, or data management interfaces
-- **Full-stack developers** needing rapid CRUD prototyping
-- **Startups/SMBs** requiring quick database-driven applications
+- **PHP Developers** building web applications with database-driven forms
+- **Full-stack Developers** needing rapid CRUD interface generation
+- **Backend Developers** creating admin panels and data management interfaces
 
 ### Use Cases
-1. **Admin Panels**: Manage users, products, categories, orders
-2. **Content Management**: Blog posts, pages, media libraries
-3. **Data Entry Systems**: Forms for data collection and management
-4. **Prototyping**: Rapid MVP development with database-driven UIs
-5. **Internal Tools**: Employee management, inventory systems, CRM backends
+1. **Admin Panels** - Quickly build admin interfaces for managing database records
+2. **Data Entry Forms** - Generate forms for data collection and management
+3. **Content Management** - Create CMS-like interfaces for content editing
+4. **User Management** - Build user registration, login, and profile management
+5. **Rapid Prototyping** - Quickly prototype database-driven applications
+6. **Internal Tools** - Create internal tools for data management and reporting
 
-### Skill Level
-- **Beginner-friendly**: Works with 3 lines of code for basic CRUD
-- **Advanced-ready**: Hooks, virtual fields, templates for complex requirements
-- **Requirements**: PHP 8.0+, basic PDO knowledge, MySQL/PostgreSQL database
+### Ideal For
+- Projects requiring rapid development of CRUD interfaces
+- Applications with complex database relationships
+- Multi-language applications (i18n support)
+- Projects requiring role-based access control
+- Applications needing audit trails and change tracking
+- Teams wanting to reduce boilerplate code
 
-## Competitive Advantages
-- **Minimal code**: 3 lines for full CRUD vs. hundreds of lines manually
-- **Security-first**: CSRF, SQL injection, XSS protection by default
-- **Database-agnostic**: MySQL and PostgreSQL support with adapter pattern
-- **Comprehensive testing**: 195 automated tests with 76% pass rate
-- **Production-ready**: Audit logging, transactions, caching, i18n
-- **Modern PHP**: Requires PHP 8.0+, uses modern language features
+## Project Statistics
+- **27 PHP classes** (~9,000 lines of code)
+- **22 working examples** across 9 categories
+- **14 technical documents**
+- **242 automated tests** (100% passing, 90% coverage)
+- **3 languages supported** (English, Spanish, French)
+- **2 databases supported** (MySQL, PostgreSQL)
+- **10 lifecycle hooks** for customization
+- **16+ metadata options** for field customization

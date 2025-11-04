@@ -7,6 +7,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.0] - 2025-01-XX
+
+### 🎉 Validation Rules & Business Logic Release
+
+Advanced validation rules and business logic configured entirely through table metadata.
+
+### ✨ Added
+
+#### Validation Rules
+- **ValidationRulesEngine** class for advanced validation
+- **unique_together** - Composite unique constraints (e.g., SKU + Category)
+- **required_if** - Conditional required fields based on other field values
+- **conditional** - Dynamic min/max validation with conditions
+- Support for complex expressions in conditions (`>`, `<`, `>=`, `<=`, `==`, `!=`)
+- Automatic integration with CRUDHandler validation flow
+
+#### Business Rules
+- **max_records_per_user** - Limit records per user (quota management)
+- **require_approval** - Approval workflow with configurable roles
+- **owner_field** - Configurable owner field for user-based limits
+- Integration with PermissionManager for user context
+
+#### Table Metadata Extensions
+- `hasValidationRules()` method in TableMetadata
+- `getValidationRules()` method in TableMetadata
+- `hasBusinessRules()` method in TableMetadata
+- `getBusinessRules()` method in TableMetadata
+- `getAllRules()` method for combined rules access
+
+#### Examples
+- `examples/10-validation-rules/` - Complete validation rules examples
+  - `unique-together.php` - Composite unique constraints demo
+  - `required-if.php` - Conditional required fields demo
+  - `conditional.php` - Dynamic validation demo
+  - `business-rules.php` - Business logic demo
+  - `setup.sql` - Database setup with vr_ prefixed tables
+  - `README.md` - Examples guide
+
+#### Testing
+- **ValidationRulesEngineTest** - 12 tests (100% passing)
+  - Unique together tests (3)
+  - Required if tests (3)
+  - Conditional validation tests (3)
+  - Business rules tests (2)
+  - Combined rules test (1)
+- All existing tests passing (243/243)
+
+#### Documentation
+- `docs/VALIDATION_RULES.md` - Complete validation rules guide
+- Configuration examples for all rule types
+- Integration examples with RBAC and hooks
+- Error handling and i18n support
+
+### 🔧 Changed
+- CRUDHandler now validates advanced rules after basic validation
+- Validation errors include field-specific and global messages
+- Transaction rollback on any validation failure
+
+### 📊 Statistics
+- **1 new class** (ValidationRulesEngine)
+- **4 new examples** in 10-validation-rules/
+- **12 new tests** (100% passing)
+- **243 total tests** (100% passing, 90% coverage)
+- **5 new TableMetadata methods**
+- **Validation features**: 3 (unique_together, required_if, conditional)
+- **Business rules**: 2 (max_records_per_user, require_approval)
+
+---
+
 ## [2.1.0] - 2024-12-XX
 
 ### 🎉 Authentication & RBAC Release
@@ -335,14 +404,14 @@ $crud->renderList();  // Now uses metadata
 
 ## Roadmap
 
-### Phase 2: Security & Validation (v2.1) - ✅ COMPLETED
+### Phase 2: Security & Validation (v2.1-v2.2) - ✅ COMPLETED
 - ✅ Permissions & Security (RBAC, row-level security)
 - ✅ Authentication (register, login, rate limiting)
-- [ ] Soft deletes
-- [ ] Validation & Rules (unique_together, conditional)
+- ✅ Soft deletes
+- ✅ Validation & Rules (unique_together, conditional, business rules)
 - [ ] Notifications (email, webhooks)
 
-### Phase 3: Advanced Features (v2.2) - Planned
+### Phase 3: Advanced Features (v2.3) - Planned
 - Versioning & Audit enhancements
 - Advanced Relationships (polymorphic, has-many-through)
 - API & Export (REST API, CSV/Excel/PDF)
