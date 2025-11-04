@@ -5,6 +5,55 @@ All notable changes to DynamicCRUD will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.0] - 2024-01-XX
+
+### Changed
+- **FileUploadHandler Refactoring** - Improved file upload organization
+  - Extracted 15 methods: `ensureUploadDirectoryExists()`, `ensureUploadDirectoryWritable()`, `validateUploadError()`, `validateFileSize()`, `validateMimeType()`, `detectMimeType()`, `saveFile()`, `getDestinationPath()`, `getPublicPath()`, `hasMultipleFiles()`, `validateFileCount()`, `processMultipleFiles()`, `isEmptyFile()`, `extractFileData()`
+  - Clear validation pipeline for better testability
+  - Separated single and multiple file handling
+  - Better error messages and validation
+- **NotificationManager Refactoring** - Separated email and webhook logic
+  - Extracted 20 methods for email (9), webhook (7), and cURL (7) operations
+  - Email methods: `hasRecipients()`, `getRecipients()`, `getSubject()`, `prepareEmailBody()`, `sendToRecipients()`, `buildEmailHeaders()`
+  - Webhook methods: `shouldTriggerWebhook()`, `executeWebhook()`, `getWebhookMethod()`, `getWebhookHeaders()`, `buildWebhookPayload()`
+  - cURL methods: `isCurlAvailable()`, `initializeCurl()`, `configureCurl()`, `setBasicCurlOptions()`, `setMethodAndPayload()`, `setCurlHeaders()`, `formatCurlHeaders()`, `executeCurl()`
+  - Better separation of concerns
+  - Easier to test and maintain
+- **WorkflowEngine Refactoring** - Simplified transition logic
+  - Extracted 18 methods for config validation (3), transition checking (6), execution (9), and history (1)
+  - Config validation: `validateField()`, `validateStates()`, `validateTransitions()`
+  - Transition checking: `transitionExists()`, `getTransitionConfig()`, `isValidFromState()`, `getAllowedFromStates()`, `hasPermission()`
+  - Transition execution: `transitionNotAllowed()`, `getNewState()`, `ensureHistoryTable()`, `isHistoryEnabled()`, `getHistoryTableName()`, `executeTransition()`, `updateState()`, `logTransitionIfEnabled()`, `transitionSuccess()`, `transitionError()`
+  - History: `fetchHistory()`
+  - Main methods reduced: `validateConfig()` to 3 lines, `canTransition()` to 4 lines, `transition()` to 6 lines
+- **AuditLogger Refactoring** - Better organization and testability
+  - Extracted 10 methods: `isEnabled()`, `buildInsertSql()`, `buildHistorySql()`, `prepareLogParams()`, `getIpAddress()`, `encodeValues()`, `executeLog()`, `fetchHistory()`
+  - Main methods reduced: `log()` from ~15 to 3 lines, `getHistory()` from ~8 to 2 lines
+  - Single responsibility per method
+  - Cleaner code structure
+
+### Improved
+- Code maintainability across file handling, notifications, workflows, and audit logging
+- Better testability with focused, single-purpose methods
+- Consistent patterns across all refactored classes
+- Self-documenting code with descriptive method names
+- Easier to extend and modify
+
+### Testing
+- All 366 tests passing (100%)
+- 6 FileUploadHandler tests passing
+- 7 NotificationManager tests passing
+- 13 WorkflowEngine tests passing
+- 6 AuditLogger tests passing
+- 90% code coverage maintained
+
+### Documentation
+- Updated `docs/REFACTORING_PATTERNS.md` with v3.6.0 refactorings
+- Added Pattern 10: Extract Validation Methods
+- Documented all 4 refactored classes
+- Marked all major classes as refactored
+
 ## [3.5.0] - 2024-01-XX
 
 ### Changed
