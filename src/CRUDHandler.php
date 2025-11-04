@@ -63,28 +63,80 @@ class CRUDHandler
 
     public function handleSubmission(): array
     {
-        // Handle workflow transitions
-        if (isset($_POST['workflow_transition']) && isset($_POST['workflow_id'])) {
-            if (!$this->workflowEngine) {
-                return ['success' => false, 'error' => 'Workflow not enabled'];
-            }
-            
-            $user = null;
-            if ($this->permissionManager) {
-                $userId = $this->permissionManager->getCurrentUserId();
-                $role = $this->permissionManager->getCurrentRole();
-                if ($userId) {
-                    $user = ['id' => $userId, 'role' => $role];
-                }
-            }
-            
-            return $this->workflowEngine->transition(
-                (int)$_POST['workflow_id'],
-                $_POST['workflow_transition'],
-                $user
-            );
+        if ($workflowResult = $this->handleWorkflowTransition()) {
+            return $workflowResult;
         }
         
+        if ($error = $this->validateCsrfToken()) {
+            return $error;
+        }
+        
+        $isUpdate = isset($_POST['id']) && $_POST['id'];
+        
+        if ($error = $this->checkPermissions($isUpdate)) {
+            return $error;
+        }
+        
+        try {
+            $this->pdo->beginTransaction();
+            
+            $data = $this->prepareData();
+            $virtualData = $this->extractVirtualData();
+            
+            if ($fileError = $this->handleFileUploads($data)) {
+                return $fileError;
+            }
+            
+            if ($validationError = $this->validateData($data, $virtualData, $isUpdate)) {
+                $this->pdo->rollBack();
+                return $validationError;
+            }
+            
+            $data = $this->applyAutomaticBehaviors($data, $isUpdate);
+            $data = $this->executeHook('beforeSave', $data);
+            
+            $id = $isUpdate ? $this->performUpdate((int)$_POST['id'], $data) : $this->performCreate($data);
+            
+            $this->executeHook('afterSave', $id, $data);
+            $this->syncManyToManyRelations($id);
+            
+            $this->pdo->commit();
+            return ['success' => true, 'id' => $id];
+            
+        } catch (\Exception $e) {
+            $this->pdo->rollBack();
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+    
+    private function handleWorkflowTransition(): ?array
+    {
+        if (!isset($_POST['workflow_transition']) || !isset($_POST['workflow_id'])) {
+            return null;
+        }
+        
+        if (!$this->workflowEngine) {
+            return ['success' => false, 'error' => 'Workflow not enabled'];
+        }
+        
+        $user = null;
+        if ($this->permissionManager) {
+            $userId = $this->permissionManager->getCurrentUserId();
+            $role = $this->permissionManager->getCurrentRole();
+            if ($userId) {
+                $user = ['id' => $userId, 'role' => $role];
+            }
+        }
+        
+        return $this->workflowEngine->transition(
+            (int)$_POST['workflow_id'],
+            $_POST['workflow_transition'],
+            $user
+        );
+    }
+    
+    private function validateCsrfToken(): ?array
+    {
         $csrfToken = $_POST['csrf_token'] ?? '';
         
         if (!$this->security->validateCsrfToken($csrfToken)) {
@@ -92,35 +144,47 @@ class CRUDHandler
             return ['success' => false, 'error' => $error];
         }
         
-        $isUpdate = isset($_POST['id']) && $_POST['id'];
+        return null;
+    }
+    
+    private function checkPermissions(bool $isUpdate): ?array
+    {
+        if (!$this->permissionManager) {
+            return null;
+        }
         
-        // Check permissions
-        if ($this->permissionManager) {
-            if ($isUpdate) {
-                $record = $this->findById((int)$_POST['id']);
-                if (!$this->permissionManager->canUpdate($record)) {
-                    $error = $this->translator ? $this->translator->t('error.permission_denied') : 'No tienes permiso para realizar esta acción';
-                    return ['success' => false, 'error' => $error];
-                }
-            } else {
-                if (!$this->permissionManager->canCreate()) {
-                    $error = $this->translator ? $this->translator->t('error.permission_denied') : 'No tienes permiso para realizar esta acción';
-                    return ['success' => false, 'error' => $error];
-                }
+        if ($isUpdate) {
+            $record = $this->findById((int)$_POST['id']);
+            if (!$this->permissionManager->canUpdate($record)) {
+                return $this->permissionDeniedError();
+            }
+        } else {
+            if (!$this->permissionManager->canCreate()) {
+                return $this->permissionDeniedError();
             }
         }
         
-        try {
-            $this->pdo->beginTransaction();
-        
+        return null;
+    }
+    
+    private function permissionDeniedError(): array
+    {
+        $error = $this->translator ? $this->translator->t('error.permission_denied') : 'No tienes permiso para realizar esta acción';
+        return ['success' => false, 'error' => $error];
+    }
+    
+    private function prepareData(): array
+    {
         $allowedColumns = array_map(
             fn($col) => $col['name'],
             array_filter($this->schema['columns'], fn($col) => !$col['is_primary'])
         );
         
-        $data = $this->security->sanitizeInput($_POST, $allowedColumns, $this->schema);
-        
-        // Capturar datos de campos virtuales
+        return $this->security->sanitizeInput($_POST, $allowedColumns, $this->schema);
+    }
+    
+    private function extractVirtualData(): array
+    {
         $virtualData = [];
         foreach ($this->virtualFields as $virtualField) {
             $fieldName = $virtualField->getName();
@@ -128,177 +192,176 @@ class CRUDHandler
                 $virtualData[$fieldName] = $_POST[$fieldName];
             }
         }
-        
-        // Hook: beforeValidate
-        $data = $this->executeHook('beforeValidate', $data);
-        
-        // Manejar archivos subidos
+        return $virtualData;
+    }
+    
+    private function handleFileUploads(array &$data): ?array
+    {
         foreach ($this->schema['columns'] as $column) {
             $fieldType = $column['metadata']['type'] ?? null;
             
             if ($fieldType === 'multiple_files') {
-                try {
-                    $uploadedFiles = $this->fileHandler->handleMultipleUploads($column['name'], $column['metadata']);
-                    
-                    // Merge with existing files
-                    $existingFiles = [];
-                    if (isset($_POST[$column['name'] . '_existing']) && is_array($_POST[$column['name'] . '_existing'])) {
-                        $existingFiles = $_POST[$column['name'] . '_existing'];
-                    }
-                    
-                    $allFiles = array_merge($existingFiles, $uploadedFiles);
-                    $data[$column['name']] = !empty($allFiles) ? json_encode($allFiles) : null;
-                    
-                } catch (\Exception $e) {
-                    return ['success' => false, 'error' => $e->getMessage()];
+                if ($error = $this->handleMultipleFiles($column, $data)) {
+                    return $error;
                 }
             } elseif ($fieldType === 'file') {
-                try {
-                    $filePath = $this->fileHandler->handleUpload($column['name'], $column['metadata']);
-                    if ($filePath) {
-                        $data[$column['name']] = $filePath;
-                    } elseif (!$column['is_nullable'] && empty($data[$column['name']])) {
-                        // Si es requerido y no hay archivo, quitar del array para que falle validación
-                        unset($data[$column['name']]);
-                    } else {
-                        // Si es opcional y no se subió archivo, quitar del array para no actualizar
-                        unset($data[$column['name']]);
-                    }
-                } catch (\Exception $e) {
-                    return ['success' => false, 'error' => $e->getMessage()];
+                if ($error = $this->handleSingleFile($column, $data)) {
+                    return $error;
                 }
             }
         }
         
+        return null;
+    }
+    
+    private function handleMultipleFiles(array $column, array &$data): ?array
+    {
+        try {
+            $uploadedFiles = $this->fileHandler->handleMultipleUploads($column['name'], $column['metadata']);
+            $existingFiles = $_POST[$column['name'] . '_existing'] ?? [];
+            $allFiles = array_merge($existingFiles, $uploadedFiles);
+            $data[$column['name']] = !empty($allFiles) ? json_encode($allFiles) : null;
+            return null;
+        } catch (\Exception $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+    
+    private function handleSingleFile(array $column, array &$data): ?array
+    {
+        try {
+            $filePath = $this->fileHandler->handleUpload($column['name'], $column['metadata']);
+            if ($filePath) {
+                $data[$column['name']] = $filePath;
+            } elseif (!$column['is_nullable'] && empty($data[$column['name']])) {
+                unset($data[$column['name']]);
+            } else {
+                unset($data[$column['name']]);
+            }
+            return null;
+        } catch (\Exception $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+    
+    private function validateData(array &$data, array $virtualData, bool $isUpdate): ?array
+    {
+        $data = $this->executeHook('beforeValidate', $data);
+        
         $validator = new ValidationEngine($this->schema, $this->translator);
         
         if (!$validator->validate($data)) {
-            $this->pdo->rollBack();
             return ['success' => false, 'errors' => $validator->getErrors()];
         }
         
-        // Validar campos virtuales
-        $virtualErrors = [];
+        if ($virtualErrors = $this->validateVirtualFields($virtualData, $data)) {
+            return ['success' => false, 'errors' => $virtualErrors];
+        }
+        
+        $data = $this->executeHook('afterValidate', $data);
+        
+        if ($ruleErrors = $this->validateAdvancedRules($data, $isUpdate)) {
+            return ['success' => false, 'errors' => $ruleErrors];
+        }
+        
+        return null;
+    }
+    
+    private function validateVirtualFields(array $virtualData, array $data): array
+    {
+        $errors = [];
         foreach ($this->virtualFields as $virtualField) {
             $fieldName = $virtualField->getName();
             $value = $virtualData[$fieldName] ?? '';
             $allData = array_merge($data, $virtualData);
             
             if (!$virtualField->validate($value, $allData)) {
-                $virtualErrors[$fieldName] = $virtualField->getErrorMessage();
+                $errors[$fieldName] = $virtualField->getErrorMessage();
             }
         }
-        
-        if (!empty($virtualErrors)) {
-            $this->pdo->rollBack();
-            return ['success' => false, 'errors' => $virtualErrors];
+        return $errors;
+    }
+    
+    private function validateAdvancedRules(array $data, bool $isUpdate): array
+    {
+        if (!$this->tableMetadata || !$this->tableMetadata->hasValidationRules()) {
+            return [];
         }
         
-        // Hook: afterValidate
-        $data = $this->executeHook('afterValidate', $data);
+        $rulesEngine = new ValidationRulesEngine(
+            $this->pdo,
+            $this->table,
+            $this->tableMetadata->getAllRules()
+        );
         
-        // Advanced validation rules from metadata
-        if ($this->tableMetadata && $this->tableMetadata->hasValidationRules()) {
-            $rulesEngine = new ValidationRulesEngine(
-                $this->pdo,
-                $this->table,
-                $this->tableMetadata->getAllRules()
-            );
-            
-            $ruleErrors = $rulesEngine->validate($data, $isUpdate ? (int)$_POST['id'] : null);
-            
-            if (!empty($ruleErrors)) {
-                $this->pdo->rollBack();
-                return ['success' => false, 'errors' => $ruleErrors];
-            }
-            
-            // Business rules validation
-            $userId = null;
-            if ($this->permissionManager) {
-                $userId = $this->permissionManager->getCurrentUserId();
-            } elseif (session_status() === PHP_SESSION_ACTIVE && isset($_SESSION['user_id'])) {
-                $userId = $_SESSION['user_id'];
-            }
-            $businessErrors = $rulesEngine->validateBusinessRules($data, $userId);
-            
-            if (!empty($businessErrors)) {
-                $this->pdo->rollBack();
-                return ['success' => false, 'errors' => $businessErrors];
-            }
+        $ruleErrors = $rulesEngine->validate($data, $isUpdate ? (int)$_POST['id'] : null);
+        if (!empty($ruleErrors)) {
+            return $ruleErrors;
         }
         
-        // Apply automatic behaviors
-        $data = $this->applyAutomaticBehaviors($data, $isUpdate);
-        
-        // Hook: beforeSave
-        $data = $this->executeHook('beforeSave', $data);
-        
-        $id = $isUpdate ? (int)$_POST['id'] : null;
-        
-        if ($isUpdate) {
-            // Hook: beforeUpdate
-            $data = $this->executeHook('beforeUpdate', $data, $id);
-            
-            // Auditoría: guardar valores antiguos
-            $oldValues = $this->auditLogger ? $this->findById($id) : [];
-            
-            $id = $this->update($id, $data);
-            
-            // Auditoría: registrar UPDATE
-            if ($this->auditLogger) {
-                $this->auditLogger->logUpdate($this->table, $id, $oldValues, $data);
-            }
-            
-            // Hook: afterUpdate
-            $this->executeHook('afterUpdate', $id, $data);
-            
-            // Notifications
-            if ($this->notificationManager) {
-                $config = $this->tableMetadata->getNotificationConfig();
-                if (isset($config['notifications']['on_update'])) {
-                    $this->notificationManager->sendEmailNotifications($config['notifications']['on_update'], $data, $id);
-                }
-                if (isset($config['webhooks'])) {
-                    $this->notificationManager->triggerWebhooks($config['webhooks'], 'on_update', $data, $id);
-                }
-            }
-        } else {
-            // Hook: beforeCreate
-            $data = $this->executeHook('beforeCreate', $data);
-            $id = $this->save($data);
-            
-            // Auditoría: registrar CREATE
-            if ($this->auditLogger) {
-                $this->auditLogger->logCreate($this->table, $id, $data);
-            }
-            
-            // Hook: afterCreate
-            $this->executeHook('afterCreate', $id, $data);
-            
-            // Notifications
-            if ($this->notificationManager) {
-                $config = $this->tableMetadata->getNotificationConfig();
-                if (isset($config['notifications']['on_create'])) {
-                    $this->notificationManager->sendEmailNotifications($config['notifications']['on_create'], $data, $id);
-                }
-                if (isset($config['webhooks'])) {
-                    $this->notificationManager->triggerWebhooks($config['webhooks'], 'on_create', $data, $id);
-                }
-            }
+        $userId = $this->getCurrentUserId();
+        return $rulesEngine->validateBusinessRules($data, $userId);
+    }
+    
+    private function getCurrentUserId(): ?int
+    {
+        if ($this->permissionManager) {
+            return $this->permissionManager->getCurrentUserId();
         }
         
-        // Hook: afterSave
-        $this->executeHook('afterSave', $id, $data);
+        if (session_status() === PHP_SESSION_ACTIVE && isset($_SESSION['user_id'])) {
+            return $_SESSION['user_id'];
+        }
         
-        // Sincronizar relaciones M:N
-        $this->syncManyToManyRelations($id);
+        return null;
+    }
+    
+    private function performUpdate(int $id, array $data): int
+    {
+        $data = $this->executeHook('beforeUpdate', $data, $id);
+        $oldValues = $this->auditLogger ? $this->findById($id) : [];
         
-        $this->pdo->commit();
-        return ['success' => true, 'id' => $id];
+        $id = $this->update($id, $data);
         
-        } catch (\Exception $e) {
-            $this->pdo->rollBack();
-            return ['success' => false, 'error' => $e->getMessage()];
+        if ($this->auditLogger) {
+            $this->auditLogger->logUpdate($this->table, $id, $oldValues, $data);
+        }
+        
+        $this->executeHook('afterUpdate', $id, $data);
+        $this->sendNotifications('on_update', $data, $id);
+        
+        return $id;
+    }
+    
+    private function performCreate(array $data): int
+    {
+        $data = $this->executeHook('beforeCreate', $data);
+        $id = $this->save($data);
+        
+        if ($this->auditLogger) {
+            $this->auditLogger->logCreate($this->table, $id, $data);
+        }
+        
+        $this->executeHook('afterCreate', $id, $data);
+        $this->sendNotifications('on_create', $data, $id);
+        
+        return $id;
+    }
+    
+    private function sendNotifications(string $event, array $data, int $id): void
+    {
+        if (!$this->notificationManager) {
+            return;
+        }
+        
+        $config = $this->tableMetadata->getNotificationConfig();
+        
+        if (isset($config['notifications'][$event])) {
+            $this->notificationManager->sendEmailNotifications($config['notifications'][$event], $data, $id);
+        }
+        
+        if (isset($config['webhooks'])) {
+            $this->notificationManager->triggerWebhooks($config['webhooks'], $event, $data, $id);
         }
     }
 
