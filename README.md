@@ -68,6 +68,39 @@ php bin/dynamiccrud generate:metadata users
 
 ---
 
+## ✨ What's New in v3.3
+
+**UI Components Library** - 15 reusable, accessible, and beautiful components for building modern UIs!
+
+```php
+use DynamicCRUD\UI\Components;
+
+// Set custom theme
+Components::setTheme(['primary' => '#667eea']);
+
+// Use components
+echo Components::alert('Success!', 'success');
+echo Components::badge('New', 'primary');
+echo Components::button('Click Me', 'primary');
+echo Components::card('Title', '<p>Content</p>');
+echo Components::modal('id', 'Title', 'Content');
+echo Components::tabs([...]);
+echo Components::table(['Name', 'Email'], [[...]]);
+echo Components::pagination(3, 10);
+```
+
+**Features:**
+- 🎨 **15 Components** - Alert, Badge, Button, Card, Modal, Tabs, Accordion, Table, and more
+- 🎭 **Themeable** - Customize colors to match your brand
+- ♿ **Accessible** - ARIA labels and keyboard navigation
+- 📱 **Responsive** - Mobile-first design
+- 🚀 **Zero Dependencies** - Pure PHP, no external libraries
+- 💅 **Modern Design** - Clean, professional styling
+
+👉 [See UI Components Example](examples/20-ui-components/)
+
+---
+
 ## ✨ What's New in v3.2
 
 **Workflow Engine** - State management with transitions, permissions, and history tracking!
@@ -682,7 +715,15 @@ $crud->handleSubmission();
 
 ## 📚 Documentation
 
-### v3.1 Features (NEW!)
+### v3.3 Features (NEW!)
+- [UI Components Guide](docs/UI_COMPONENTS.md) - 15 reusable components
+- Components Library - Alerts, badges, buttons, cards, modals, tabs, tables, and more
+
+### v3.2 Features
+- [Workflow Engine Guide](docs/WORKFLOW.md) - State management with transitions
+- Workflow System - Permission-based transitions and history tracking
+
+### v3.1 Features
 - Admin Panel Generator - Complete admin panel with dashboard
 - Sidebar Navigation - Customizable menu with icons
 
@@ -971,7 +1012,19 @@ php vendor/phpunit/phpunit/phpunit tests/SoftDeletesTest.php
 - 1 new example (order management workflow)
 - 13 new tests (100% passing)
 
-### 🔮 Planned (v3.3+)
+### ✅ Completed (v3.3.0)
+- **UI Components Library**
+  - 15 reusable components (alert, badge, button, card, modal, tabs, accordion, table, etc.)
+  - Themeable with custom colors
+  - Accessible with ARIA labels
+  - Responsive mobile-first design
+  - Zero dependencies
+  - XSS protection built-in
+- Components class with static methods
+- 1 new example (UI components showcase)
+- 26 new tests (100% passing)
+
+### 🔮 Planned (v3.4+)
 - [ ] GraphQL support
 - [ ] OAuth/LDAP authentication
 - [ ] Email verification
@@ -982,10 +1035,10 @@ php vendor/phpunit/phpunit/phpunit tests/SoftDeletesTest.php
 
 ## 📊 Project Stats
 
-- **38 PHP classes** (~13,500 lines)
-- **37 working examples** (1 in v3.2, 1 in v3.1, 1 in v3.0, 2 in v2.9, 1 in v2.8, 1 in v2.7, 2 in v2.5, 2 in v2.3, 4 in v2.2, 6 in v2.1, 4 in v2.0)
-- **21 technical documents**
-- **341 automated tests** (100% passing, 90% coverage)
+- **39 PHP classes** (~14,000 lines)
+- **38 working examples** (1 in v3.3, 1 in v3.2, 1 in v3.1, 1 in v3.0, 2 in v2.9, 1 in v2.8, 1 in v2.7, 2 in v2.5, 2 in v2.3, 4 in v2.2, 6 in v2.1, 4 in v2.0)
+- **22 technical documents**
+- **367 automated tests** (100% passing, 90% coverage)
 - **19 CLI commands**
 - **Languages supported**: 3 (English, Spanish, French)
 - **Databases supported**: 2 (MySQL, PostgreSQL)
