@@ -74,7 +74,7 @@ class WorkflowEngine
         return $result[$field] ?? null;
     }
 
-    public function canTransition(string $transition, ?string $currentState = null, ?array $user = null): bool
+    public function canTransition(string $transition, ?string $currentState = null, ?array $user = null, ?array $record = null): bool
     {
         if (!$this->transitionExists($transition)) {
             return false;
@@ -88,6 +88,25 @@ class WorkflowEngine
         
         if (!$this->hasPermission($transitionConfig, $user)) {
             return false;
+        }
+        
+        if (!$this->meetsConditions($transitionConfig, $record)) {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    private function meetsConditions(array $transitionConfig, ?array $record): bool
+    {
+        if (!isset($transitionConfig['conditions']) || $record === null) {
+            return true;
+        }
+        
+        foreach ($transitionConfig['conditions'] as $field => $value) {
+            if (!isset($record[$field]) || $record[$field] != $value) {
+                return false;
+            }
         }
         
         return true;
@@ -361,5 +380,70 @@ class WorkflowEngine
             htmlspecialchars($color),
             htmlspecialchars($label)
         );
+    }
+    
+    public function getAnalytics(): array
+    {
+        $field = $this->config['field'];
+        
+        // Count by state
+        $sql = "SELECT {$field} as state, COUNT(*) as count FROM {$this->table} GROUP BY {$field}";
+        $stmt = $this->pdo->query($sql);
+        $byState = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $byState[$row['state']] = (int)$row['count'];
+        }
+        
+        // Transition stats
+        $transitionStats = [];
+        if ($this->isHistoryEnabled()) {
+            $historyTable = $this->getHistoryTableName();
+            $sql = "SELECT transition, COUNT(*) as count FROM {$historyTable} WHERE table_name = :table GROUP BY transition";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute(['table' => $this->table]);
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $transitionStats[$row['transition']] = (int)$row['count'];
+            }
+        }
+        
+        return [
+            'by_state' => $byState,
+            'transitions' => $transitionStats,
+            'total' => array_sum($byState)
+        ];
+    }
+    
+    public function checkEscalations(): array
+    {
+        if (!isset($this->config['escalations'])) {
+            return [];
+        }
+        
+        $escalated = [];
+        $field = $this->config['field'];
+        
+        foreach ($this->config['escalations'] as $rule) {
+            $state = $rule['state'];
+            $timeout = $rule['timeout']; // in seconds
+            $action = $rule['action'] ?? 'notify';
+            
+            $sql = "SELECT id, {$field}, updated_at FROM {$this->table} 
+                    WHERE {$field} = :state 
+                    AND updated_at < DATE_SUB(NOW(), INTERVAL :timeout SECOND)";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute(['state' => $state, 'timeout' => $timeout]);
+            
+            while ($record = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $escalated[] = [
+                    'record_id' => $record['id'],
+                    'state' => $state,
+                    'action' => $action,
+                    'rule' => $rule
+                ];
+            }
+        }
+        
+        return $escalated;
     }
 }
