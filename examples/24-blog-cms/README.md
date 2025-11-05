@@ -29,9 +29,16 @@ This will:
 - Generate sitemap.xml
 - Generate feed.xml
 
-### Step 2: Configure Apache
+### Step 2: Start Server
 
-Make sure `mod_rewrite` is enabled in Apache for clean URLs.
+**Option A: PHP Built-in Server (Development)**
+```bash
+cd examples/24-blog-cms
+php -S localhost:8000 router.php
+```
+
+**Option B: Apache (Production)**
+Make sure `mod_rewrite` is enabled. The `.htaccess` file will handle routing.
 
 ### Step 3: Visit Your Blog
 
