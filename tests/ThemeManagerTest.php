@@ -3,93 +3,227 @@
 namespace DynamicCRUD\Tests;
 
 use PHPUnit\Framework\TestCase;
-use DynamicCRUD\ThemeManager;
-use DynamicCRUD\GlobalMetadata;
+use DynamicCRUD\Theme\ThemeManager;
+use DynamicCRUD\Theme\Theme;
 
+/**
+ * @runTestsInSeparateProcesses
+ * @preserveGlobalState disabled
+ */
 class ThemeManagerTest extends TestCase
 {
     private \PDO $pdo;
-    private GlobalMetadata $config;
-    private ThemeManager $themeManager;
-
+    private ThemeManager $manager;
+    private string $themesDir;
+    
     protected function setUp(): void
     {
         $this->pdo = new \PDO('mysql:host=localhost;dbname=test', 'root', 'rootpassword');
         $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         
-        $this->config = new GlobalMetadata($this->pdo);
-        $this->config->clear();
+        $this->cleanup();
         
-        $this->themeManager = new ThemeManager($this->config);
+        $this->themesDir = __DIR__ . '/fixtures/themes';
+        $this->manager = new ThemeManager($this->pdo, $this->themesDir);
     }
-
+    
     protected function tearDown(): void
     {
-        $this->config->clear();
+        $this->cleanup();
     }
-
-    public function testGetThemeReturnsDefaults(): void
+    
+    private function cleanup(): void
     {
-        $theme = $this->themeManager->getTheme();
-        
-        $this->assertIsArray($theme);
-        $this->assertEquals('#667eea', $theme['primary_color']);
-        $this->assertEquals('#764ba2', $theme['secondary_color']);
+        try {
+            $this->pdo->exec("DROP TABLE IF EXISTS _themes");
+        } catch (\Exception $e) {
+            // Ignore
+        }
     }
-
-    public function testGetThemeMergesWithConfig(): void
+    
+    public function testThemesTableCreated(): void
     {
-        $this->config->set('theme', ['primary_color' => '#ff0000']);
-        
-        $theme = $this->themeManager->getTheme();
-        
-        $this->assertEquals('#ff0000', $theme['primary_color']);
-        $this->assertEquals('#764ba2', $theme['secondary_color']); // Default
+        $stmt = $this->pdo->query("SHOW TABLES LIKE '_themes'");
+        $this->assertEquals(1, $stmt->rowCount());
     }
-
-    public function testRenderCSSVariables(): void
+    
+    public function testRegisterTheme(): void
     {
-        $this->config->set('theme', [
-            'primary_color' => '#123456',
-            'font_family' => 'Arial, sans-serif'
+        $theme = $this->createMockTheme('Test Theme');
+        $this->manager->register('test', $theme);
+        
+        $available = $this->manager->getAvailable();
+        $this->assertArrayHasKey('test', $available);
+        $this->assertEquals('Test Theme', $available['test']['name']);
+    }
+    
+    public function testActivateTheme(): void
+    {
+        $theme = $this->createMockTheme('Test Theme');
+        $this->manager->register('test', $theme);
+        
+        $result = $this->manager->activate('test');
+        $this->assertTrue($result);
+        
+        $active = $this->manager->getActive();
+        $this->assertNotNull($active);
+        $this->assertEquals('Test Theme', $active->getName());
+    }
+    
+    public function testActivateNonExistentTheme(): void
+    {
+        $result = $this->manager->activate('nonexistent');
+        $this->assertFalse($result);
+    }
+    
+    public function testDeactivateTheme(): void
+    {
+        $theme = $this->createMockTheme('Test Theme');
+        $this->manager->register('test', $theme);
+        $this->manager->activate('test');
+        
+        $result = $this->manager->deactivate();
+        $this->assertTrue($result);
+        
+        $active = $this->manager->getActive();
+        $this->assertNull($active);
+    }
+    
+    public function testOnlyOneThemeActive(): void
+    {
+        $theme1 = $this->createMockTheme('Theme 1');
+        $theme2 = $this->createMockTheme('Theme 2');
+        
+        $this->manager->register('theme1', $theme1);
+        $this->manager->register('theme2', $theme2);
+        
+        $this->manager->activate('theme1');
+        $this->manager->activate('theme2');
+        
+        $stmt = $this->pdo->query("SELECT COUNT(*) FROM _themes WHERE active = 1");
+        $count = $stmt->fetchColumn();
+        $this->assertEquals(1, $count);
+    }
+    
+    public function testGetThemeInfo(): void
+    {
+        $theme = $this->createMockTheme('Test Theme');
+        $this->manager->register('test', $theme);
+        
+        $info = $this->manager->getThemeInfo('test');
+        
+        $this->assertArrayHasKey('name', $info);
+        $this->assertArrayHasKey('description', $info);
+        $this->assertArrayHasKey('version', $info);
+        $this->assertArrayHasKey('author', $info);
+        $this->assertEquals('Test Theme', $info['name']);
+    }
+    
+    public function testIsInstalled(): void
+    {
+        $theme = $this->createMockTheme('Test Theme');
+        $this->manager->register('test', $theme);
+        
+        $this->assertFalse($this->manager->isInstalled('test'));
+        
+        $this->manager->activate('test');
+        $this->assertTrue($this->manager->isInstalled('test'));
+    }
+    
+    public function testRenderWithActiveTheme(): void
+    {
+        $theme = $this->createMockTheme('Test Theme');
+        $this->manager->register('test', $theme);
+        $this->manager->activate('test');
+        
+        $html = $this->manager->render('home', ['title' => 'Test']);
+        $this->assertStringContainsString('Test Theme', $html);
+    }
+    
+    public function testRenderWithoutActiveTheme(): void
+    {
+        $html = $this->manager->render('home', []);
+        $this->assertStringContainsString('No Active Theme', $html);
+    }
+    
+    public function testGetConfig(): void
+    {
+        $theme = $this->createMockTheme('Test Theme', [
+            'colors' => ['primary' => '#667eea']
         ]);
+        $this->manager->register('test', $theme);
+        $this->manager->activate('test');
         
-        $css = $this->themeManager->renderCSSVariables();
-        
-        $this->assertStringContainsString(':root {', $css);
-        $this->assertStringContainsString('--primary-color: #123456;', $css);
-        $this->assertStringContainsString('--font-family: Arial, sans-serif;', $css);
+        $config = $this->manager->getConfig();
+        $this->assertIsArray($config);
+        $this->assertArrayHasKey('colors', $config);
     }
-
-    public function testRenderBrandingWithLogo(): void
+    
+    public function testGetConfigWithDotNotation(): void
     {
-        $this->config->set('application', [
-            'name' => 'Test App',
-            'logo' => '/logo.png'
+        $theme = $this->createMockTheme('Test Theme', [
+            'colors' => ['primary' => '#667eea']
         ]);
+        $this->manager->register('test', $theme);
+        $this->manager->activate('test');
         
-        $html = $this->themeManager->renderBranding();
-        
-        $this->assertStringContainsString('app-branding', $html);
-        $this->assertStringContainsString('Test App', $html);
-        $this->assertStringContainsString('/logo.png', $html);
+        $color = $this->manager->getConfig('colors.primary');
+        $this->assertEquals('#667eea', $color);
     }
-
-    public function testRenderBrandingWithoutConfig(): void
+    
+    public function testSetConfig(): void
     {
-        $html = $this->themeManager->renderBranding();
+        $theme = $this->createMockTheme('test');
+        $this->manager->register('test', $theme);
+        $this->manager->activate('test');
         
-        $this->assertEmpty($html);
+        $result = $this->manager->setConfig('custom.setting', 'value');
+        $this->assertTrue($result);
+        
+        // Verify in database
+        $stmt = $this->pdo->prepare("SELECT config FROM _themes WHERE name = :name");
+        $stmt->execute(['name' => 'test']);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        
+        $this->assertNotEmpty($row);
+        $config = json_decode($row['config'] ?? '{}', true);
+        $this->assertEquals('value', $config['custom']['setting']);
     }
-
-    public function testApplyThemeToStyles(): void
+    
+    public function testSetConfigWithoutActiveTheme(): void
     {
-        $css = 'background: #667eea; color: #764ba2;';
+        $result = $this->manager->setConfig('test', 'value');
+        $this->assertFalse($result);
+    }
+    
+    public function testGetAvailable(): void
+    {
+        $theme1 = $this->createMockTheme('Theme 1');
+        $theme2 = $this->createMockTheme('Theme 2');
         
-        $themed = $this->themeManager->applyThemeToStyles($css);
+        $this->manager->register('theme1', $theme1);
+        $this->manager->register('theme2', $theme2);
         
-        $this->assertStringContainsString('var(--primary-color)', $themed);
-        $this->assertStringContainsString('var(--secondary-color)', $themed);
-        $this->assertStringNotContainsString('#667eea', $themed);
+        $available = $this->manager->getAvailable();
+        $this->assertCount(2, $available);
+        $this->assertArrayHasKey('theme1', $available);
+        $this->assertArrayHasKey('theme2', $available);
+    }
+    
+    private function createMockTheme(string $name, array $config = []): Theme
+    {
+        $theme = $this->createMock(Theme::class);
+        
+        $theme->method('getName')->willReturn($name);
+        $theme->method('getDescription')->willReturn('Test description');
+        $theme->method('getVersion')->willReturn('1.0.0');
+        $theme->method('getAuthor')->willReturn('Test Author');
+        $theme->method('getScreenshot')->willReturn('screenshot.png');
+        $theme->method('getConfig')->willReturn($config);
+        $theme->method('getTemplates')->willReturn(['home', 'single']);
+        $theme->method('getAssets')->willReturn(['css' => ['style.css'], 'js' => []]);
+        $theme->method('render')->willReturn('<html>' . $name . '</html>');
+        
+        return $theme;
     }
 }

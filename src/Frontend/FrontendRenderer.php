@@ -3,6 +3,7 @@
 namespace DynamicCRUD\Frontend;
 
 use DynamicCRUD\Template\TemplateEngine;
+use DynamicCRUD\Theme\ThemeManager;
 
 /**
  * FrontendRenderer
@@ -16,14 +17,16 @@ class FrontendRenderer
     private string $contentType;
     private ?SEOManager $seo;
     private string $prefix;
+    private ?ThemeManager $themeManager;
     
-    public function __construct(\PDO $pdo, string $contentType = 'blog', ?TemplateEngine $engine = null, ?SEOManager $seo = null, string $prefix = '')
+    public function __construct(\PDO $pdo, string $contentType = 'blog', ?TemplateEngine $engine = null, ?SEOManager $seo = null, string $prefix = '', ?ThemeManager $themeManager = null)
     {
         $this->pdo = $pdo;
         $this->contentType = $contentType;
         $this->engine = $engine;
         $this->seo = $seo;
         $this->prefix = $prefix;
+        $this->themeManager = $themeManager;
     }
     
     /**
@@ -179,6 +182,11 @@ class FrontendRenderer
      */
     private function renderTemplate(string $template, array $data): string
     {
+        // Priority: ThemeManager > TemplateEngine > Simple HTML
+        if ($this->themeManager) {
+            return $this->themeManager->render($template, $data);
+        }
+        
         if ($this->engine) {
             return $this->engine->render($template, $data);
         }
