@@ -14,12 +14,14 @@ class FrontendRenderer
     private \PDO $pdo;
     private ?TemplateEngine $engine;
     private string $contentType;
+    private ?SEOManager $seo;
     
-    public function __construct(\PDO $pdo, string $contentType = 'blog', ?TemplateEngine $engine = null)
+    public function __construct(\PDO $pdo, string $contentType = 'blog', ?TemplateEngine $engine = null, ?SEOManager $seo = null)
     {
         $this->pdo = $pdo;
         $this->contentType = $contentType;
         $this->engine = $engine;
+        $this->seo = $seo;
     }
     
     /**
@@ -36,7 +38,9 @@ class FrontendRenderer
         $data = [
             'post' => $post,
             'title' => $post['title'],
-            'content' => $post['content']
+            'content' => $post['content'],
+            'seo_meta' => $this->seo ? $this->seo->generateMetaTags($post) : '',
+            'seo_schema' => $this->seo ? $this->seo->generateSchemaOrg($post) : ''
         ];
         
         return $this->renderTemplate('single', $data);
