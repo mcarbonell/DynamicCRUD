@@ -1,0 +1,11 @@
+# DynamicCRUD Blog CMS - URL Rewriting
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /examples/24-blog-cms/
+    
+    # Redirect to index.php unless file exists
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php [L,QSA]
+</IfModule>
