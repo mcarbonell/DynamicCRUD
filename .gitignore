@@ -17,6 +17,9 @@ examples/uploads/*
 # Local documents
 local_docs/
 
+# Landing page (separate repo)
+landing/
+
 # Local configuration
 dynamiccrud.json
 
